@@ -78,4 +78,19 @@ Then:
 
 ## License
 
-_(TODO — add a license file.)_
+`SPDX-License-Identifier: GPL-3.0-or-later`
+
+Local Review is released under the [GNU General Public License v3.0 or later](LICENSE).
+Forks and modified redistributions must be licensed under GPL-3.0 (or a later
+compatible GPL version).
+
+### Commercial licensing
+
+The author (Adam Kopeć) is the sole copyright holder and may grant alternative
+(non-GPL) licenses for use cases that are incompatible with GPL-3 — e.g. embedding
+the plugin inside a closed-source product distribution. Contact
+<adam.kopec@gmail.com> to discuss.
+
+Contributions, if any, are accepted under GPL-3.0-or-later and must be the
+contributor's own work (or accompanied by explicit permission from the rights
+holder).

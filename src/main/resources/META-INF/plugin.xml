@@ -1,7 +1,8 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 <idea-plugin url="https://github.com/adam-kopec/local-review">
     <id>com.localreview</id>
     <name>Local Review</name>
-    <vendor email="adam.kopec@gmail.com" url="https://github.com/adam-kopec/local-review">Adam Kopec</vendor>
+    <vendor email="adam.kopec@gmail.com" url="https://github.com/adam-kopec/local-review">Adam Kopeć</vendor>
     <!-- <description> and <change-notes> are injected at build time from README.md and
          CHANGELOG.md by the patchPluginXml task. Do not duplicate them here. -->
 

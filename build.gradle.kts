@@ -83,7 +83,7 @@ intellijPlatform {
             untilBuild = providers.gradleProperty("pluginUntilBuild")
         }
         vendor {
-            name = "Adam Kopec"
+            name = "Adam Kopeć"
             email = "adam.kopec@gmail.com"
             url = providers.gradleProperty("pluginRepositoryUrl").get()
         }
@@ -160,6 +160,14 @@ tasks {
     }
     wrapper {
         gradleVersion = "8.13"
+    }
+    // Include the repo-root LICENSE file alongside the bundled jars so the plugin zip is
+    // self-contained for auditors / users inspecting it offline. The Marketplace listing
+    // and GitHub's license detector pick up the license from the repo root regardless.
+    prepareSandbox {
+        from(layout.projectDirectory.file("LICENSE")) {
+            into(rootProject.name)
+        }
     }
 }
 
