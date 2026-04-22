@@ -143,6 +143,60 @@ intellijPlatformTesting {
             }
         }
     }
+
+    // `runIdeForUiTests` launches the sandbox IDE with the robot-server plugin enabled, so that
+    // Remote Robot UI tests can connect to it over http://127.0.0.1:8082. Run this in one
+    // terminal, then `./gradlew uiTest` in another.
+    runIde.register("runIdeForUiTests") {
+        task {
+            jvmArgumentProviders += CommandLineArgumentProvider {
+                listOf(
+                    "-Drobot-server.port=8082",
+                    "-Dide.mac.message.dialogs.as.sheets=false",
+                    "-Djb.privacy.policy.text=<!--999.999-->",
+                    "-Djb.consents.confirmation.enabled=false",
+                    "-Didea.trust.all.projects=true",
+                    "-Dide.show.tips.on.startup.default.value=false",
+                )
+            }
+        }
+        plugins {
+            robotServerPlugin()
+        }
+    }
+}
+
+// Separate source set + task for Remote Robot UI tests. They require a running IDE launched via
+// `runIdeForUiTests`; keep them out of the regular `test` task so they don't block CI.
+sourceSets {
+    create("uiTest") {
+        kotlin.srcDir("src/uiTest/kotlin")
+        resources.srcDir("src/uiTest/resources")
+        compileClasspath += sourceSets["main"].output
+        runtimeClasspath += sourceSets["main"].output
+    }
+}
+
+configurations {
+    named("uiTestImplementation") { extendsFrom(configurations.testImplementation.get()) }
+    named("uiTestRuntimeOnly") { extendsFrom(configurations.testRuntimeOnly.get()) }
+}
+
+dependencies {
+    "uiTestImplementation"("com.intellij.remoterobot:remote-robot:0.11.23")
+    "uiTestImplementation"("com.intellij.remoterobot:remote-fixtures:0.11.23")
+    "uiTestImplementation"("com.squareup.okhttp3:okhttp:4.12.0")
+}
+
+tasks.register<Test>("uiTest") {
+    description = "Runs Remote Robot UI smoke tests. Requires a running ./gradlew runIdeForUiTests."
+    group = "verification"
+    testClassesDirs = sourceSets["uiTest"].output.classesDirs
+    classpath = sourceSets["uiTest"].runtimeClasspath
+    useJUnitPlatform()
+    systemProperty("robot-server.port", "8082")
+    // Don't fail the suite when the IDE isn't up — fail fast with a clear message in the test.
+    shouldRunAfter("test")
 }
 
 tasks {

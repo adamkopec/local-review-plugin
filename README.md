@@ -55,10 +55,44 @@ Under **Settings → Tools → Local Review**:
 
 ```
 ./gradlew runIde           # launches a sandbox IDE with the plugin
-./gradlew test             # runs the test suite
+./gradlew test             # runs the headless test suite (unit + integration)
 ./gradlew verifyPlugin     # runs JetBrains Plugin Verifier across target IDEs
 ./gradlew buildPlugin      # produces the distributable zip
 ```
+
+### Tests
+
+Two layers of regression coverage:
+
+1. **Headless tests** (`./gradlew test`) — default, fast, deterministic.
+   - *Unit tests* for `ContentHasher`, `Key`, `State` round-trip, `ReviewStateService`.
+   - *Light-platform tests* for the service's PSC behavior via `BasePlatformTestCase`.
+   - *Integration tests* in `src/test/kotlin/com/localreview/integration/` cover the
+     end-to-end invalidation flows (mark → document edit → mark drops, mark → VFS save
+     with different content → mark drops, same content → mark stays, etc.) using the
+     real `EditorFactory`, `VirtualFileManager`, and `ChangeListManager`.
+
+2. **Remote Robot UI smoke tests** (`./gradlew uiTest`) — slow, last-line safety net.
+   Exercise a real sandbox IDE over HTTP via the JetBrains Remote Robot framework.
+   Run in two terminals:
+
+   ```
+   # Terminal 1
+   ./gradlew runIdeForUiTests
+
+   # Terminal 2 — once the IDE window is up
+   ./gradlew uiTest
+   ```
+
+   The current smoke suite checks that the action is registered, the plugin's
+   application service is instantiable, and the bundle strings render correctly.
+   Extend `src/uiTest/kotlin/.../LocalReviewUiSmokeTest.kt` for richer flows.
+
+   CI runs these too — see the `ui-tests` job in `.github/workflows/ci.yml`. It
+   installs Xvfb, launches the IDE in the background, waits for the Robot port
+   to become reachable, runs the tests, and uploads the IDE log + any screenshots
+   on failure. The job is marked `continue-on-error: true` so UI flakiness doesn't
+   block merges — flip that off once the suite stabilises.
 
 ## Publishing
 

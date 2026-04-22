@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- GPL-3.0-or-later license (`LICENSE` + SPDX identifier in README / plugin.xml).
+- Integration test suite (`InvalidationFlowsIT`) covering document-edit invalidation,
+  VFS-save invalidation with different content, VFS-save with identical content, and
+  listener tolerance for files without a stored mark.
+- Remote Robot UI smoke-test scaffolding (`src/uiTest/kotlin/`, `runIdeForUiTests` +
+  `uiTest` Gradle tasks) — asserts action registration, service instantiation, and
+  bundle strings against a live sandbox IDE.
+- GitHub Actions `ui-tests` job: installs Xvfb, launches the sandbox IDE in the
+  background, waits for the Remote Robot port, runs `uiTest`, and uploads the IDE
+  log + screenshots on failure. Marked `continue-on-error: true` until the suite
+  stabilises.
+
 ## [0.1.0]
 
 ### Added
