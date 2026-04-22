@@ -1,6 +1,0 @@
-<idea-plugin>
-    <projectListeners>
-        <listener class="com.localreview.vcs.GitBranchListener"
-                  topic="git4idea.repo.GitRepositoryChangeListener"/>
-    </projectListeners>
-</idea-plugin>

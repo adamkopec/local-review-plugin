@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 <idea-plugin url="https://github.com/adam-kopec/local-review">
-    <id>com.localreview</id>
+    <id>pl.archiprogram.localreview</id>
     <name>Local Review</name>
     <vendor email="adam.kopec@gmail.com" url="https://github.com/adam-kopec/local-review">Adam Kopeć</vendor>
     <!-- <description> and <change-notes> are injected at build time from README.md and
@@ -10,34 +10,34 @@
 
     <depends>com.intellij.modules.platform</depends>
     <depends>com.intellij.modules.vcs</depends>
-    <depends optional="true" config-file="com.localreview-git.xml">Git4Idea</depends>
+    <depends optional="true" config-file="pl.archiprogram.localreview-git.xml">Git4Idea</depends>
 
     <extensions defaultExtensionNs="com.intellij">
-        <applicationService serviceImplementation="com.localreview.hash.ContentHasher"/>
-        <applicationService serviceInterface="com.localreview.vcs.BranchProvider"
-                            serviceImplementation="com.localreview.vcs.DefaultBranchProvider"/>
-        <applicationService serviceImplementation="com.localreview.settings.LocalReviewSettings"/>
+        <applicationService serviceImplementation="pl.archiprogram.localreview.hash.ContentHasher"/>
+        <applicationService serviceInterface="pl.archiprogram.localreview.vcs.BranchProvider"
+                            serviceImplementation="pl.archiprogram.localreview.vcs.DefaultBranchProvider"/>
+        <applicationService serviceImplementation="pl.archiprogram.localreview.settings.LocalReviewSettings"/>
 
-        <projectService serviceImplementation="com.localreview.state.ReviewStateService"/>
+        <projectService serviceImplementation="pl.archiprogram.localreview.state.ReviewStateService"/>
 
-        <postStartupActivity implementation="com.localreview.startup.ReviewStartupActivity"/>
+        <postStartupActivity implementation="pl.archiprogram.localreview.startup.ReviewStartupActivity"/>
 
         <changesGroupingPolicy key="localreview.viewed"
-                               implementationClass="com.localreview.ui.ViewedGroupingPolicyFactory"/>
+                               implementationClass="pl.archiprogram.localreview.ui.ViewedGroupingPolicyFactory"/>
 
-        <vcs.changes.changesViewModifier implementation="com.localreview.ui.ReviewedChangesViewModifier"/>
+        <vcs.changes.changesViewModifier implementation="pl.archiprogram.localreview.ui.ReviewedChangesViewModifier"/>
 
-        <postStartupActivity implementation="com.localreview.ui.CommitViewRendererInstaller"/>
+        <postStartupActivity implementation="pl.archiprogram.localreview.ui.CommitViewRendererInstaller"/>
 
-        <statusBarWidgetFactory id="com.localreview.counter"
-                                implementation="com.localreview.ui.CounterWidgetFactory"/>
+        <statusBarWidgetFactory id="pl.archiprogram.localreview.counter"
+                                implementation="pl.archiprogram.localreview.ui.CounterWidgetFactory"/>
 
         <projectConfigurable parentId="tools"
-                             id="com.localreview.settings"
-                             instance="com.localreview.settings.LocalReviewConfigurable"
+                             id="pl.archiprogram.localreview.settings"
+                             instance="pl.archiprogram.localreview.settings.LocalReviewConfigurable"
                              key="settings.title"/>
 
-        <registryKey key="com.localreview.trace"
+        <registryKey key="pl.archiprogram.localreview.trace"
                      defaultValue="false"
                      description="Enable Local Review debug trace logging"/>
 
@@ -48,14 +48,14 @@
     </extensions>
 
     <projectListeners>
-        <listener class="com.localreview.vcs.ChangeSetListener"
+        <listener class="pl.archiprogram.localreview.vcs.ChangeSetListener"
                   topic="com.intellij.openapi.vcs.changes.ChangeListListener"/>
     </projectListeners>
 
     <actions resource-bundle="messages.LocalReviewBundle">
         <action id="LocalReview.ToggleViewed"
-                class="com.localreview.action.ToggleViewedAction"
-                icon="com.localreview.Icons.VIEWED">
+                class="pl.archiprogram.localreview.action.ToggleViewedAction"
+                icon="pl.archiprogram.localreview.Icons.VIEWED">
             <keyboard-shortcut keymap="$default" first-keystroke="control alt shift V"/>
             <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta alt shift V"/>
             <add-to-group group-id="ChangesViewPopupMenu" anchor="first"/>
@@ -65,13 +65,13 @@
             <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
         </action>
         <action id="LocalReview.MarkAllViewed"
-                class="com.localreview.action.MarkAllViewedAction">
+                class="pl.archiprogram.localreview.action.MarkAllViewedAction">
             <add-to-group group-id="ChangesViewPopupMenu"
                           anchor="after"
                           relative-to-action="LocalReview.ToggleViewed"/>
         </action>
         <action id="LocalReview.UnmarkAll"
-                class="com.localreview.action.UnmarkAllAction">
+                class="pl.archiprogram.localreview.action.UnmarkAllAction">
             <add-to-group group-id="ChangesViewPopupMenu"
                           anchor="after"
                           relative-to-action="LocalReview.MarkAllViewed"/>
