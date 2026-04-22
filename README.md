@@ -24,6 +24,15 @@ it again, the mark drops automatically so you don't miss the new churn.
   into commits.
 - Configurable TTL and per-branch cap keep state bounded.
 - Works across the IntelliJ Platform: IDEA, PyCharm, WebStorm, GoLand, Android Studio, ...
+
+**Getting started**
+
+Install the plugin, open any project with a Git working tree, then open the Commit
+tool window. Right-click any changed or unversioned file and pick **Mark as Reviewed**,
+or press `Ctrl+Alt+Shift+V` (`⌘⌥⇧V` on macOS). Edit the file later and the mark drops
+automatically. Configure retention and cap under **Settings → Tools → Local Review**.
+
+**Source & issues:** [github.com/adam-kopec/local-review](https://github.com/adam-kopec/local-review)
 <!-- Plugin description end -->
 
 ## Installation
@@ -96,19 +105,8 @@ Two layers of regression coverage:
 
 ## Publishing
 
-Set environment variables:
-
-- `PUBLISH_TOKEN` — JetBrains Marketplace upload token
-  ([get one here](https://plugins.jetbrains.com/author/me/tokens))
-- _(Optional, if you're signing the plugin)_ `CERTIFICATE_CHAIN`, `PRIVATE_KEY`,
-  `PRIVATE_KEY_PASSWORD` — JetBrains plugin signing credentials
-
-Then:
-
-```
-./gradlew patchChangelog   # shifts [Unreleased] → [x.y.z] in CHANGELOG.md
-./gradlew publishPlugin    # signs (if configured) and uploads to Marketplace
-```
+See [PUBLISHING.md](PUBLISHING.md) for the full release + Marketplace listing
+checklist (pre-flight, Gradle commands, admin-panel fields to fill).
 
 ## License
 

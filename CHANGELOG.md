@@ -20,6 +20,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   background, waits for the Remote Robot port, runs `uiTest`, and uploads the IDE
   log + screenshots on failure. Marked `continue-on-error: true` until the suite
   stabilises.
+- Marketplace listing readiness: extended the plugin description with a
+  *Getting started* paragraph and inline source / issues link;
+  added `PUBLISHING.md` with pre-flight + admin-panel release checklist
+  and the screenshot capture spec.
 
 ## [0.1.0]
 
