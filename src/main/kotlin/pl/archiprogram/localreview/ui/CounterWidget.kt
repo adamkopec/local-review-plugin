@@ -43,7 +43,7 @@ class CounterWidget(private val project: Project) : StatusBarWidget, StatusBarWi
 
     override fun getText(): String {
         val (viewed, total) = computeCounts()
-        if (total == 0) return LocalReviewBundle.message("widget.counter.empty")
+        if (total == 0) return ""
         return "Reviewed $viewed/$total"
     }
 
@@ -51,7 +51,7 @@ class CounterWidget(private val project: Project) : StatusBarWidget, StatusBarWi
 
     override fun getTooltipText(): String {
         val (viewed, total) = computeCounts()
-        if (total == 0) return LocalReviewBundle.message("widget.counter.empty")
+        if (total == 0) return ""
         val branch = primaryBranch()
         return if (branch != null && branch != Key.NO_BRANCH && branch != Key.NO_VCS) {
             LocalReviewBundle.message("widget.counter.tooltip", viewed, total, branch)

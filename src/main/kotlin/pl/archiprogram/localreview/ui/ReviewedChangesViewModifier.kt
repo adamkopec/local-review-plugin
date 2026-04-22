@@ -89,7 +89,7 @@ class ReviewedRootNode(
     ) {
         renderer.icon = Icons.VIEWED
         renderer.append(
-            LocalReviewBundle.message("grouping.viewed.bucket.viewed") + " ",
+            LocalReviewBundle.message("grouping.reviewed.label") + " ",
             SimpleTextAttributes.REGULAR_ATTRIBUTES,
         )
         renderer.append(
@@ -104,7 +104,7 @@ class ReviewedRootNode(
     }
 
     override fun getTextPresentation(): String =
-        "${LocalReviewBundle.message("grouping.viewed.bucket.viewed")} $viewedCount of $totalCount"
+        "${LocalReviewBundle.message("grouping.reviewed.label")} $viewedCount of $totalCount"
 
     companion object {
         private const val LABEL = "localreview.reviewed"
@@ -125,14 +125,14 @@ class ToReviewRootNode(private val remaining: Int) : ChangesBrowserNode<String>(
     ) {
         renderer.icon = Icons.UNVIEWED
         renderer.append(
-            LocalReviewBundle.message("grouping.toreview.title") + " ",
+            LocalReviewBundle.message("grouping.pending.label") + " ",
             SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES,
         )
         renderer.append("($remaining)", SimpleTextAttributes.GRAYED_ATTRIBUTES)
     }
 
     override fun getTextPresentation(): String =
-        "${LocalReviewBundle.message("grouping.toreview.title")} ($remaining)"
+        "${LocalReviewBundle.message("grouping.pending.label")} ($remaining)"
 
     companion object {
         private const val LABEL = "localreview.toreview"

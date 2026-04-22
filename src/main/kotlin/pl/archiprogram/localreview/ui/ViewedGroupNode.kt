@@ -14,7 +14,7 @@ class ViewedGroupNode(val viewed: Boolean) : ChangesBrowserNode<Boolean>(viewed)
         expanded: Boolean,
         hasFocus: Boolean,
     ) {
-        val key = if (viewed) "grouping.viewed.bucket.viewed" else "grouping.viewed.bucket.unviewed"
+        val key = if (viewed) "grouping.reviewed.label" else "grouping.pending.label"
         val attrs = if (viewed) SimpleTextAttributes.GRAYED_ATTRIBUTES else SimpleTextAttributes.REGULAR_ATTRIBUTES
         renderer.append(LocalReviewBundle.message(key), attrs)
         appendCount(renderer)
@@ -23,6 +23,6 @@ class ViewedGroupNode(val viewed: Boolean) : ChangesBrowserNode<Boolean>(viewed)
 
     override fun getTextPresentation(): String =
         LocalReviewBundle.message(
-            if (viewed) "grouping.viewed.bucket.viewed" else "grouping.viewed.bucket.unviewed",
+            if (viewed) "grouping.reviewed.label" else "grouping.pending.label",
         )
 }

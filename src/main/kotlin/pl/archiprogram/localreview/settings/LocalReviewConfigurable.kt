@@ -16,7 +16,6 @@ class LocalReviewConfigurable : Configurable {
     }
 
     private var panel: JComponent? = null
-    private var autoMarkCheckBox: JBCheckBox? = null
     private var groupingCheckBox: JBCheckBox? = null
     private var debugLoggingCheckBox: JBCheckBox? = null
 
@@ -36,10 +35,6 @@ class LocalReviewConfigurable : Configurable {
                 row {
                     groupingCheckBox = checkBox(LocalReviewBundle.message("settings.enableGrouping"))
                         .bindSelected(model::enableGrouping).component
-                }
-                row {
-                    autoMarkCheckBox = checkBox(LocalReviewBundle.message("settings.autoMarkOnDiffClose"))
-                        .bindSelected(model::autoMarkOnDiffClose).component
                 }
                 row {
                     debugLoggingCheckBox = checkBox(LocalReviewBundle.message("settings.enableDebugLogging"))
@@ -63,7 +58,6 @@ class LocalReviewConfigurable : Configurable {
         ttlDays = other.ttlDays
         perBranchCap = other.perBranchCap
         enableGrouping = other.enableGrouping
-        autoMarkOnDiffClose = other.autoMarkOnDiffClose
         enableDebugLogging = other.enableDebugLogging
     }
 }
