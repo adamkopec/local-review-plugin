@@ -1,7 +1,5 @@
 package pl.archiprogram.localreview.mcp
 
-import com.intellij.openapi.application.Application
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
@@ -40,13 +38,14 @@ class LocalReviewMcpLogicTest {
     private val service: ReviewStateService = mockk(relaxed = true)
     private val settings: LocalReviewSettings = mockk(relaxed = true)
     private val clm: ChangeListManager = mockk(relaxed = true)
-    private val application: Application = mockk(relaxed = true)
 
     @BeforeEach
     fun setUp() {
-        mockkStatic(ApplicationManager::class)
-        every { ApplicationManager.getApplication() } returns application
-
+        // NB: don't mockkStatic(ApplicationManager::class) here. The platform spins up
+        // background coroutines (e.g. ShadeIndexDumbModeTracker on 2024.2) that call
+        // ApplicationManager.getApplication().getService(ReadWriteActionSupport::class.java);
+        // a relaxed-mock application returns Object, which ClassCast-bombs and the JUnit5
+        // TestUncaughtExceptionHandler fails the test even though our assertion passes.
         every { project.isDisposed } returns false
 
         mockkObject(LocalReviewSettings.Companion)

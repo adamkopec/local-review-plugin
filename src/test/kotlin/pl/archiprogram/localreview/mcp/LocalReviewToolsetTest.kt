@@ -3,12 +3,9 @@ package pl.archiprogram.localreview.mcp
 import com.intellij.mcpserver.McpToolset
 import com.intellij.mcpserver.annotations.McpDescription
 import com.intellij.mcpserver.annotations.McpTool
-import com.intellij.openapi.application.Application
-import com.intellij.openapi.application.ApplicationManager
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
-import io.mockk.mockkStatic
 import io.mockk.unmockkAll
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.AfterEach
@@ -38,12 +35,14 @@ import kotlin.reflect.full.isSubclassOf
 class LocalReviewToolsetTest {
 
     private val settings: LocalReviewSettings = mockk(relaxed = true)
-    private val application: Application = mockk(relaxed = true)
 
     @BeforeEach
     fun setUp() {
-        mockkStatic(ApplicationManager::class)
-        every { ApplicationManager.getApplication() } returns application
+        // NB: don't mockkStatic(ApplicationManager::class) here. The platform spins up
+        // background coroutines (e.g. ShadeIndexDumbModeTracker on 2024.2) that call
+        // ApplicationManager.getApplication().getService(ReadWriteActionSupport::class.java);
+        // a relaxed-mock application returns Object, which ClassCast-bombs and the JUnit5
+        // TestUncaughtExceptionHandler fails the test even though our assertion passes.
         mockkObject(LocalReviewSettings.Companion)
         every { LocalReviewSettings.getInstance() } returns settings
     }
