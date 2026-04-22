@@ -11,6 +11,7 @@
     <depends>com.intellij.modules.platform</depends>
     <depends>com.intellij.modules.vcs</depends>
     <depends optional="true" config-file="pl.archiprogram.localreview-git.xml">Git4Idea</depends>
+    <depends optional="true" config-file="pl.archiprogram.localreview-mcp.xml">com.intellij.mcpServer</depends>
 
     <extensions defaultExtensionNs="com.intellij">
         <applicationService serviceImplementation="pl.archiprogram.localreview.hash.ContentHasher"/>

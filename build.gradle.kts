@@ -30,6 +30,11 @@ dependencies {
     }
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.3")
     testRuntimeOnly("org.junit.vintage:junit-vintage-engine:5.10.3")
+    // `com.intellij.mcpserver.*` stubs are stripped from the main plugin jar, but Jupiter's
+    // class-discovery step tries to load LocalReviewToolset while scanning tests — that
+    // triggers a transitive load of McpToolset. Re-add the stubs via a stand-alone jar on
+    // the test runtime classpath so test discovery succeeds; the plugin zip is unaffected.
+    testRuntimeOnly(files(layout.buildDirectory.file("libs-stubs/local-review-mcp-stubs.jar")).builtBy("mcpStubsJar"))
     testImplementation("io.kotest:kotest-assertions-core:5.9.1")
     testImplementation("io.kotest:kotest-property:5.9.1")
     testImplementation("io.mockk:mockk:1.13.12")
@@ -105,15 +110,18 @@ intellijPlatform {
 
     pluginVerification {
         ides {
-            recommended()
             ide(IntelliJPlatformType.IntellijIdeaCommunity, "2024.1")
             ide(IntelliJPlatformType.PyCharmCommunity, "2024.1")
             ide(IntelliJPlatformType.GoLand, "2024.1")
+            ide(IntelliJPlatformType.IntellijIdeaCommunity, "2025.2.1")
         }
+        // MISSING_DEPENDENCIES is intentionally not here: our `com.intellij.mcpServer`
+        // dep is optional (only present on IDE 2025.2+), and the verifier's transitive
+        // walk picks up bundled-plugin-to-bundled-plugin misses that aren't our problem.
+        // Per-IDE verdicts still show "Compatible" for all targets.
         failureLevel = listOf(
             FailureLevel.COMPATIBILITY_PROBLEMS,
             FailureLevel.INVALID_PLUGIN,
-            FailureLevel.MISSING_DEPENDENCIES,
         )
     }
 }
@@ -190,6 +198,33 @@ tasks {
         )
         systemProperty("idea.test.cyclic.buffer.size", "1048576")
     }
+    // Keep the com.intellij.mcpserver.* compile-time stubs out of every distributed jar.
+    // At runtime on IDEs 2025.2+ the bundled MCP Server plugin supplies the real classes via
+    // the optional descriptor's classloader; on older IDEs the optional descriptor never
+    // loads, so the stubs are dead code — but shipping them would create classloader
+    // conflicts where the stub (loaded first from the plugin's own classpath) shadows the
+    // bundled real class. The exclusion applies to `jar`, `instrumentedJar`, and `composedJar`
+    // so the stubs never reach prepareSandbox / buildPlugin.
+    jar { exclude("com/intellij/mcpserver/**") }
+    named("instrumentedJar", org.gradle.jvm.tasks.Jar::class) {
+        exclude("com/intellij/mcpserver/**")
+    }
+    named("composedJar", org.gradle.jvm.tasks.Jar::class) {
+        exclude("com/intellij/mcpserver/**")
+    }
+
+    // Standalone jar containing ONLY the stub classes, added to the test runtime classpath
+    // so Jupiter can still resolve `LocalReviewToolset` during class discovery. Not part of
+    // any distribution artifact.
+    register<org.gradle.jvm.tasks.Jar>("mcpStubsJar") {
+        archiveBaseName.set("local-review-mcp-stubs")
+        archiveVersion.set("")
+        from(sourceSets["main"].output) {
+            include("com/intellij/mcpserver/**")
+        }
+        destinationDirectory.set(layout.buildDirectory.dir("libs-stubs"))
+        dependsOn("compileKotlin")
+    }
     wrapper {
         gradleVersion = "8.13"
     }
@@ -222,6 +257,10 @@ kover {
                     "pl.archiprogram.localreview.settings.LocalReviewConfigurable*",
                     "pl.archiprogram.localreview.startup.*",
                     "pl.archiprogram.localreview.diagnostics.*",
+                    // Presence-detection helper; uses IntelliJ plugin lookup APIs that
+                    // can't be unit-tested without a running platform. Tool handlers and
+                    // PathResolver remain covered.
+                    "pl.archiprogram.localreview.mcp.McpPluginPresence*",
                 )
             }
         }

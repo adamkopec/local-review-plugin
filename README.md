@@ -8,14 +8,14 @@ being marked.
 **Local Review** brings GitHub's "Viewed" checkbox to IntelliJ's Commit / Local Changes
 view — so you can keep track of which files in your working tree you've already reviewed.
 
-It's designed for reviewing AI-generated, auto-refactored, or machine-edited code locally:
-mark a file as reviewed, and if a code-gen tool, formatter, or your own editor touches
-it again, the mark drops automatically so you don't miss the new churn.
+It's designed for reviewing AI-generated, auto-refactored, or machine-edited code
+locally: mark a file reviewed, and if a tool touches it again the mark drops. On
+IntelliJ 2025.2+ the agent can even drive the state via MCP — *"mark these files reviewed."*
 
 **Features**
 
 - Mark / unmark files as reviewed from the Commit tool window, an editor tab,
-  the editor itself, or the Project View.
+  the editor itself, or the Project View — or from an AI agent via MCP.
 - `To review (N)` and `Reviewed N of M · XX%` synthetic groups in Local Changes
   give at-a-glance progress.
 - Inline ✓ badge on reviewed rows.
@@ -59,6 +59,35 @@ Under **Settings → Tools → Local Review**:
 - TTL (days) — forget reviewed marks older than this.
 - Per-branch cap — evict oldest marks when a branch exceeds it.
 - Enable debug logging (restart required).
+- Expose "viewed" tools to MCP-connected AI agents (see below). Grayed out when
+  the MCP Server plugin isn't installed.
+
+## MCP integration
+
+When the JetBrains MCP Server plugin is installed (bundled in IDEs 2025.2+, on
+the Marketplace for 2024.3–2025.1), Local Review exposes five tools that external
+AI agents — Claude Desktop, Cursor, the JetBrains AI Assistant, `mcp-inspector`,
+etc. — can invoke:
+
+| Tool | Purpose |
+|---|---|
+| `local_review_list_changes` | Return JSON array of changed files with viewed status. |
+| `local_review_mark_all_viewed` | Mark every file in the current changeset as viewed. |
+| `local_review_unmark_all` | Clear all viewed marks for the project. |
+| `local_review_mark_files` | Mark specific files (absolute or project-relative paths). |
+| `local_review_unmark_files` | Unmark specific files. |
+
+So a prompt like *"mark all files in this changeset as reviewed"* reaches the plugin
+and flips the same state the UI toggles.
+
+**Privacy.** When the integration is enabled, these tools expose the paths and
+viewed-state of files in your current changeset to connected MCP clients. All data
+stays on your machine — nothing is sent to Local Review's vendor. Disable the
+integration under **Settings → Tools → Local Review** at any time.
+
+**Silent activation.** The setting defaults to on, so if you install the MCP
+Server plugin after Local Review, the tools become discoverable without further
+configuration. Flip the checkbox off if you'd rather opt in explicitly.
 
 ## Development
 

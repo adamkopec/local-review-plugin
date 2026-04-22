@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- MCP Server integration. Five tools — `local_review_list_changes`,
+  `local_review_mark_all_viewed`, `local_review_unmark_all`, `local_review_mark_files`,
+  `local_review_unmark_files` — let external AI agents (Claude Desktop, Cursor, the
+  JetBrains AI Assistant, etc.) drive the "viewed" state when the bundled MCP Server
+  plugin is present (IntelliJ-based IDEs 2025.2+). Enabled by default; disable under
+  **Settings → Tools → Local Review → Expose "viewed" tools to MCP-connected AI
+  agents**. Tools only act on files in the current local changeset, matching the UI's
+  "Mark as Reviewed" semantics. Implemented via the reflection-scanned
+  `com.intellij.mcpserver.McpToolset` API — no dependency on the deprecated external
+  `mcp-server-plugin`. All data stays on your machine.
 - GPL-3.0-or-later license (`LICENSE` + SPDX identifier in README / plugin.xml).
 - Integration test suite (`InvalidationFlowsIT`) covering document-edit invalidation,
   VFS-save invalidation with different content, VFS-save with identical content, and

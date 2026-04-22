@@ -20,6 +20,7 @@ class LocalReviewSettings : PersistentStateComponent<LocalReviewSettings.State> 
         var enableGrouping: Boolean = true,
         var autoMarkOnDiffClose: Boolean = false,
         var enableDebugLogging: Boolean = false,
+        var enableMcpTools: Boolean = true,
     )
 
     private var state: State = State()
