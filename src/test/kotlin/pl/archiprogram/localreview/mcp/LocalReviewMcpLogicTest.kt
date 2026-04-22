@@ -172,6 +172,20 @@ class LocalReviewMcpLogicTest {
             verify(exactly = 0) { service.mark(any(), any(), any()) }
         }
 
+        @Test fun marks_deleted_files_with_the_deletion_sentinel() {
+            // Regression: deletions have no afterRevision, so hashAfter returns DELETED_HASH
+            // (a sentinel) rather than null — without this, bulk-mark silently skipped deletes.
+            val k1 = Key("/r", "main", "/r/gone.kt")
+            val c1 = change(k1, FileStatus.DELETED, hash = pl.archiprogram.localreview.action.DELETED_HASH)
+            every { clm.allChanges } returns listOf(c1)
+            every { service.isViewed(k1) } returns false
+
+            assertEquals(1, markAllViewed(project))
+            verify(exactly = 1) {
+                service.mark(k1, pl.archiprogram.localreview.action.DELETED_HASH, any())
+            }
+        }
+
         @Test fun returns_zero_for_disposed_project() {
             every { project.isDisposed } returns true
             assertEquals(0, markAllViewed(project))

@@ -132,7 +132,21 @@ internal fun Change.key(project: com.intellij.openapi.project.Project): Key? {
     return KeyDeriver.keyFor(project, file)
 }
 
+/**
+ * Sentinel stored for a deletion change that the user marks as reviewed. Not a valid SHA-256,
+ * so the [pl.archiprogram.localreview.state.ReviewStateService.reconcile] rehash step drops
+ * the mark if the deletion is ever undone (real content → different hash → entry removed).
+ */
+internal const val DELETED_HASH: String = "<deleted>"
+
 internal fun Change.hashAfter(): String? {
-    val vf = afterRevision?.file?.virtualFile ?: return null
+    val after = afterRevision
+    if (after == null) {
+        // Pure deletion (no afterRevision) but the VCS knew the file before: record a sentinel
+        // so the mark persists for the deletion itself. A non-deletion Change with neither
+        // revision is unexpected — return null.
+        return if (beforeRevision != null) DELETED_HASH else null
+    }
+    val vf = after.file.virtualFile ?: return null
     return ContentHasher.getInstance().hash(vf)
 }
