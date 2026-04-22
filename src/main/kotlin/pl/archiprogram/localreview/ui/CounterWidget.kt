@@ -3,7 +3,6 @@ package pl.archiprogram.localreview.ui
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.ChangeListListener
-import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.util.messages.MessageBusConnection
@@ -11,7 +10,7 @@ import pl.archiprogram.localreview.LocalReviewBundle
 import pl.archiprogram.localreview.state.Key
 import pl.archiprogram.localreview.state.ReviewStateService
 import pl.archiprogram.localreview.vcs.BranchProvider
-import pl.archiprogram.localreview.vcs.KeyDeriver
+import pl.archiprogram.localreview.vcs.ReviewBreakdown
 
 class CounterWidget(private val project: Project) : StatusBarWidget, StatusBarWidget.TextPresentation {
 
@@ -42,37 +41,22 @@ class CounterWidget(private val project: Project) : StatusBarWidget, StatusBarWi
     override fun getPresentation(): StatusBarWidget.WidgetPresentation = this
 
     override fun getText(): String {
-        val (viewed, total) = computeCounts()
-        if (total == 0) return LocalReviewBundle.message("widget.counter.empty")
-        return "Reviewed $viewed/$total"
+        val breakdown = ReviewBreakdown.compute(project)
+        if (breakdown.totalCount == 0) return LocalReviewBundle.message("widget.counter.empty")
+        return "Reviewed ${breakdown.viewedCount}/${breakdown.totalCount}"
     }
 
     override fun getAlignment(): Float = 0.0f
 
     override fun getTooltipText(): String {
-        val (viewed, total) = computeCounts()
-        if (total == 0) return LocalReviewBundle.message("widget.counter.empty.tooltip")
+        val breakdown = ReviewBreakdown.compute(project)
+        if (breakdown.totalCount == 0) return LocalReviewBundle.message("widget.counter.empty.tooltip")
         val branch = primaryBranch()
         return if (branch != null && branch != Key.NO_BRANCH && branch != Key.NO_VCS) {
-            LocalReviewBundle.message("widget.counter.tooltip", viewed, total, branch)
+            LocalReviewBundle.message("widget.counter.tooltip", breakdown.viewedCount, breakdown.totalCount, branch)
         } else {
-            LocalReviewBundle.message("widget.counter.tooltip.noBranch", viewed, total)
+            LocalReviewBundle.message("widget.counter.tooltip.noBranch", breakdown.viewedCount, breakdown.totalCount)
         }
-    }
-
-    private fun computeCounts(): Pair<Int, Int> {
-        if (project.isDisposed) return 0 to 0
-        val clm = ChangeListManager.getInstance(project)
-        val service = ReviewStateService.getInstance(project)
-        val changes = clm.allChanges
-        val total = changes.size
-        var viewed = 0
-        for (change in changes) {
-            val file = change.afterRevision?.file ?: change.beforeRevision?.file ?: continue
-            val key = KeyDeriver.keyFor(project, file) ?: continue
-            if (service.isViewed(key)) viewed++
-        }
-        return viewed to total
     }
 
     private fun primaryBranch(): String? {

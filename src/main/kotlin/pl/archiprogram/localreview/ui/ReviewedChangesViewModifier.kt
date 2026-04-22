@@ -1,7 +1,6 @@
 package pl.archiprogram.localreview.ui
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.ChangesViewModifier
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer
@@ -9,8 +8,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewModelBuilder
 import com.intellij.ui.SimpleTextAttributes
 import pl.archiprogram.localreview.Icons
 import pl.archiprogram.localreview.LocalReviewBundle
-import pl.archiprogram.localreview.state.ReviewStateService
-import pl.archiprogram.localreview.vcs.KeyDeriver
+import pl.archiprogram.localreview.vcs.ReviewBreakdown
 
 /**
  * Adds a synthetic "Reviewed (N)" top-level group to the Local Changes tree. Files appear
@@ -24,46 +22,37 @@ class ReviewedChangesViewModifier(private val project: Project) : ChangesViewMod
 
     override fun modifyTreeModelBuilder(builder: ChangesViewModelBuilder) {
         if (project.isDisposed) return
-        val service = ReviewStateService.getInstance(project)
-        val clm = ChangeListManager.getInstance(project)
-
-        val viewedChanges = mutableListOf<com.intellij.openapi.vcs.changes.Change>()
-        val unviewedChanges = mutableListOf<com.intellij.openapi.vcs.changes.Change>()
-        for (change in clm.allChanges) {
-            val file = change.afterRevision?.file ?: change.beforeRevision?.file ?: continue
-            val key = KeyDeriver.keyFor(project, file) ?: continue
-            if (service.isViewed(key)) viewedChanges += change else unviewedChanges += change
-        }
-
-        val viewedUnversioned = mutableListOf<com.intellij.openapi.vfs.VirtualFile>()
-        val unviewedUnversioned = mutableListOf<com.intellij.openapi.vfs.VirtualFile>()
-        for (filePath in clm.unversionedFilesPaths) {
-            val vf = filePath.virtualFile ?: continue
-            val key = KeyDeriver.keyFor(project, filePath) ?: continue
-            if (service.isViewed(key)) viewedUnversioned += vf else unviewedUnversioned += vf
-        }
-
-        val viewedCount = viewedChanges.size + viewedUnversioned.size
-        val unviewedCount = unviewedChanges.size + unviewedUnversioned.size
-        val totalCount = viewedCount + unviewedCount
-        LOG.info("LocalReview: synthetic groups — viewed=$viewedCount, unviewed=$unviewedCount, total=$totalCount")
+        val breakdown = ReviewBreakdown.compute(project)
+        val totalCount = breakdown.totalCount
+        LOG.info(
+            "LocalReview: synthetic groups — viewed=${breakdown.viewedCount}, " +
+                "unviewed=${breakdown.unviewedCount}, total=$totalCount",
+        )
 
         if (totalCount == 0) return
 
         // Top: "To review (N)" so unviewed files are scannable in one place.
-        if (unviewedCount > 0) {
-            val toReviewRoot = ToReviewRootNode(unviewedCount)
+        if (breakdown.unviewedCount > 0) {
+            val toReviewRoot = ToReviewRootNode(breakdown.unviewedCount)
             builder.insertSubtreeRoot(toReviewRoot)
-            if (unviewedChanges.isNotEmpty()) builder.insertChanges(unviewedChanges, toReviewRoot)
-            if (unviewedUnversioned.isNotEmpty()) builder.insertFilesIntoNode(unviewedUnversioned, toReviewRoot)
+            if (breakdown.unviewedChanges.isNotEmpty()) {
+                builder.insertChanges(breakdown.unviewedChanges, toReviewRoot)
+            }
+            if (breakdown.unviewedUnversioned.isNotEmpty()) {
+                builder.insertFilesIntoNode(breakdown.unviewedUnversioned, toReviewRoot)
+            }
         }
 
         // Below: "Reviewed N of M · XX%" — progress + list of viewed files.
-        if (viewedCount > 0) {
-            val reviewedRoot = ReviewedRootNode(viewedCount = viewedCount, totalCount = totalCount)
+        if (breakdown.viewedCount > 0) {
+            val reviewedRoot = ReviewedRootNode(viewedCount = breakdown.viewedCount, totalCount = totalCount)
             builder.insertSubtreeRoot(reviewedRoot)
-            if (viewedChanges.isNotEmpty()) builder.insertChanges(viewedChanges, reviewedRoot)
-            if (viewedUnversioned.isNotEmpty()) builder.insertFilesIntoNode(viewedUnversioned, reviewedRoot)
+            if (breakdown.viewedChanges.isNotEmpty()) {
+                builder.insertChanges(breakdown.viewedChanges, reviewedRoot)
+            }
+            if (breakdown.viewedUnversioned.isNotEmpty()) {
+                builder.insertFilesIntoNode(breakdown.viewedUnversioned, reviewedRoot)
+            }
         }
     }
 
