@@ -24,6 +24,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   *Getting started* paragraph and inline source / issues link;
   added `PUBLISHING.md` with pre-flight + admin-panel release checklist
   and the screenshot capture spec.
+- Real coverage gate: 77.7% line coverage on the logic layer, 70% threshold
+  enforced on the CI `coverage` job (no longer `continue-on-error`).
+  New tests: `KeyDeriverTest`, `DefaultBranchProviderTest`, `GitBranchListenerTest`
+  (all MockK-based), `TargetCollectorTest`, `ChangeSetScannerTest`,
+  `ToggleViewedActionTest`. Extracted `TargetCollector` and `ChangeSetScanner`
+  to make action / listener logic unit-testable without a live IDE.
 
 ## [0.1.0]
 

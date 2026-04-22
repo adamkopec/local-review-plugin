@@ -95,41 +95,15 @@ class ToggleViewedAction : AnAction() {
 
     private fun collectTargets(e: AnActionEvent, project: Project?): List<Target> {
         if (project == null) return emptyList()
-        val clm = ChangeListManager.getInstance(project)
-        val out = mutableListOf<Target>()
-        val seenKeys = mutableSetOf<Key>()
-
-        e.getData(VcsDataKeys.CHANGES)?.forEach { change ->
-            val key = change.key(project) ?: return@forEach
-            if (seenKeys.add(key)) out += Target.Changed(project, change, key)
-        }
-
-        // Unversioned files from the platform's own Unversioned Files group.
-        e.getData(ChangesListView.UNVERSIONED_FILE_PATHS_DATA_KEY)?.forEach { filePath ->
-            val key = KeyDeriver.keyFor(project, filePath) ?: return@forEach
-            if (seenKeys.add(key)) out += Target.Unversioned(project, filePath, key)
-        }
-
-        // Fallback: any VirtualFile selection (editor tab, editor, Project View, our synthetic
-        // groups). We only accept files that are actually changes or unversioned — marking a
-        // committed/unchanged file as reviewed is a no-op (the reconcile pass would drop it).
-        val candidateFiles = buildList {
-            e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)?.let { addAll(it) }
-            e.getData(CommonDataKeys.VIRTUAL_FILE)?.let { add(it) }
-        }
-        for (vf in candidateFiles) {
-            if (vf.isDirectory || !vf.isValid) continue
-            val change = clm.getChange(vf)
-            val unversioned = clm.isUnversioned(vf)
-            if (change == null && !unversioned) continue
-            val filePath = VcsUtil.getFilePath(vf)
-            val key = KeyDeriver.keyFor(project, filePath) ?: continue
-            if (!seenKeys.add(key)) continue
-            out += if (change != null) Target.Changed(project, change, key)
-                   else Target.Unversioned(project, filePath, key)
-        }
-
-        return out
+        return TargetCollector.collect(
+            project = project,
+            changes = e.getData(VcsDataKeys.CHANGES),
+            unversionedPaths = e.getData(ChangesListView.UNVERSIONED_FILE_PATHS_DATA_KEY),
+            candidateFiles = buildList {
+                e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)?.let { addAll(it) }
+                e.getData(CommonDataKeys.VIRTUAL_FILE)?.let { add(it) }
+            },
+        )
     }
 }
 

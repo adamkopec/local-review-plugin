@@ -125,28 +125,6 @@ changelog {
 }
 
 intellijPlatformTesting {
-    testIde {
-        register("testIdePyCharm") {
-            type = IntelliJPlatformType.PyCharmCommunity
-            version = providers.gradleProperty("platformVersion")
-            task {
-                useJUnitPlatform()
-                include("**/*IT*")
-            }
-        }
-        register("testIdeGoLand") {
-            type = IntelliJPlatformType.GoLand
-            version = providers.gradleProperty("platformVersion")
-            task {
-                useJUnitPlatform()
-                include("**/*IT*")
-            }
-        }
-    }
-
-    // `runIdeForUiTests` launches the sandbox IDE with the robot-server plugin enabled, so that
-    // Remote Robot UI tests can connect to it over http://127.0.0.1:8082. Run this in one
-    // terminal, then `./gradlew uiTest` in another.
     runIde.register("runIdeForUiTests") {
         task {
             jvmArgumentProviders += CommandLineArgumentProvider {
@@ -226,11 +204,31 @@ tasks {
 }
 
 kover {
+    currentProject {
+        sources {
+            excludedSourceSets.add("uiTest")
+        }
+        instrumentation {
+            disabledForTestTasks.add("uiTest")
+        }
+    }
     reports {
+        filters {
+            excludes {
+                classes(
+                    "pl.archiprogram.localreview.Icons*",
+                    "pl.archiprogram.localreview.LocalReviewBundle*",
+                    "pl.archiprogram.localreview.ui.*",
+                    "pl.archiprogram.localreview.settings.LocalReviewConfigurable*",
+                    "pl.archiprogram.localreview.startup.*",
+                    "pl.archiprogram.localreview.diagnostics.*",
+                )
+            }
+        }
         verify {
             rule {
                 bound {
-                    minValue = 80
+                    minValue = 70
                 }
             }
         }

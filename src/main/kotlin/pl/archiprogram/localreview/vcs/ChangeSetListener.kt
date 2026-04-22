@@ -34,42 +34,16 @@ class ChangeSetListener(private val project: Project) : ChangeListListener {
         if (project.isDisposed) return
         val service = project.service<ReviewStateService>()
         val clm = ChangeListManager.getInstance(project)
+        val hasher = ContentHasher.getInstance()
 
-        val currentChanges = mutableSetOf<Key>()
-        val renames = mutableMapOf<Key, Key>()
-        val rehash = mutableMapOf<Key, String>()
-
-        try {
-            ReadAction.run<RuntimeException> {
-                val changes = clm.allChanges
-                val hasher = ContentHasher.getInstance()
-                for (change in changes) {
-                    val skipRehash = change.fileStatus == FileStatus.MERGED_WITH_CONFLICTS
-                    val after = change.afterRevision?.file
-                    val before = change.beforeRevision?.file
-
-                    val afterKey = after?.let { KeyDeriver.keyFor(project, it) }
-                    val beforeKey = before?.let { KeyDeriver.keyFor(project, it) }
-
-                    val activeKey = afterKey ?: beforeKey
-                    if (activeKey != null) {
-                        currentChanges.add(activeKey)
-                    }
-
-                    // Rename: both sides present, different paths
-                    if (afterKey != null && beforeKey != null && afterKey != beforeKey) {
-                        renames[beforeKey] = afterKey
-                    }
-
-                    // Defense-in-depth rehash — only for live files we haven't skipped
-                    if (!skipRehash && afterKey != null) {
-                        val vf = after?.virtualFile
-                        if (vf != null && (service.isViewed(afterKey) || renames.containsValue(afterKey))) {
-                            val hex = hasher.hash(vf)
-                            if (hex != null) rehash[afterKey] = hex
-                        }
-                    }
-                }
+        val result = try {
+            ReadAction.compute<ChangeSetScanner.Result, RuntimeException> {
+                ChangeSetScanner.scan(
+                    project = project,
+                    changes = clm.allChanges,
+                    isViewed = service::isViewed,
+                    hasher = hasher,
+                )
             }
         } catch (e: Exception) {
             LOG.warn("Reconcile failed: ${e.message}", e)
@@ -78,15 +52,13 @@ class ChangeSetListener(private val project: Project) : ChangeListListener {
 
         val settings = LocalReviewSettings.getInstance().current()
         val stateChanged = service.reconcile(
-            currentChanges = currentChanges,
-            renames = renames,
-            rehashedContent = rehash,
+            currentChanges = result.currentChanges,
+            renames = result.renames,
+            rehashedContent = result.rehash,
             settings = settings,
         )
         // CRITICAL: only refresh when state actually changed. Calling SafeRefresh on every
         // CLM update would create a feedback loop (refresh → CLM update → reconcile → refresh).
-        // Even when state did change, skip the tree refresh — our grouping policy re-reads
-        // state on the next natural tree rebuild, and widget observers get the messageBus event.
         if (stateChanged) {
             SafeRefresh.refreshFileStatuses(project)
         }
