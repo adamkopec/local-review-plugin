@@ -1,6 +1,6 @@
 package pl.archiprogram.localreview.vfs
 
-import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
@@ -22,7 +22,7 @@ import java.util.concurrent.ExecutorService
  * Application-scoped async listener that rehashes files when their content changes. If a rehash
  * yields a different digest than the one stored when the file was marked, the mark is dropped.
  *
- * Heavy work runs on a bounded pool wrapped by [ReadAction.nonBlocking] so we don't block the EDT.
+ * Heavy work runs on a bounded executor pool; rehashes acquire a read lock via [runReadAction].
  */
 class ContentChangeListener : AsyncFileListener {
 
@@ -54,7 +54,7 @@ class ContentChangeListener : AsyncFileListener {
         private fun handleFile(file: VirtualFile) {
             for (project in ProjectManager.getInstance().openProjects) {
                 if (project.isDisposed) continue
-                val key = ReadAction.compute<Key?, RuntimeException> {
+                val key = runReadAction {
                     if (project.isDisposed) null else KeyDeriver.keyFor(project, file)
                 } ?: continue
 
@@ -65,7 +65,7 @@ class ContentChangeListener : AsyncFileListener {
                 // up on the next CLM update anyway. We still rehash because the edit might have
                 // happened before CLM refreshed.
                 val newHash = try {
-                    ReadAction.compute<String?, RuntimeException> {
+                    runReadAction {
                         if (project.isDisposed) null else ContentHasher.getInstance().hash(file)
                     }
                 } catch (e: Throwable) {

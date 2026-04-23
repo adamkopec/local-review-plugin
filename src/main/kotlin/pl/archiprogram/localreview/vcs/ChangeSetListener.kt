@@ -1,6 +1,6 @@
 package pl.archiprogram.localreview.vcs
 
-import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
@@ -37,7 +37,7 @@ class ChangeSetListener(private val project: Project) : ChangeListListener {
         val hasher = ContentHasher.getInstance()
 
         val result = try {
-            ReadAction.compute<ChangeSetScanner.Result, RuntimeException> {
+            runReadAction {
                 ChangeSetScanner.scan(
                     project = project,
                     changes = clm.allChanges,

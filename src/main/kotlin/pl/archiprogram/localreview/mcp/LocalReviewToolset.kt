@@ -4,7 +4,7 @@ import com.intellij.mcpserver.McpToolset
 import com.intellij.mcpserver.annotations.McpDescription
 import com.intellij.mcpserver.annotations.McpTool
 import com.intellij.mcpserver.project
-import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.currentCoroutineContext
 import pl.archiprogram.localreview.ui.SafeRefresh
@@ -18,7 +18,7 @@ import pl.archiprogram.localreview.ui.SafeRefresh
  *    integration in Settings → Tools → Local Review;
  *  - resolves the current project from the coroutine context (the bundled MCP infrastructure
  *    populates the project extension before dispatching);
- *  - wraps the real work in a [ReadAction] since it touches VCS and VFS state.
+ *  - wraps the real work in a [runReadAction] since it touches VCS and VFS state.
  *
  * Tools return plain [String]s — list-shaped results are minimal JSON so agents can parse them
  * deterministically. The `internal` logic functions in LocalReviewMcpLogic are directly
@@ -35,7 +35,7 @@ class LocalReviewToolset : McpToolset {
     suspend fun local_review_list_changes(): String {
         if (!mcpToolsEnabled()) noToolPermitted()
         val project = currentProject()
-        return ReadAction.compute<String, RuntimeException> {
+        return runReadAction {
             changeEntriesToJson(listChanges(project))
         }
     }
@@ -50,7 +50,7 @@ class LocalReviewToolset : McpToolset {
         if (!mcpToolsEnabled()) noToolPermitted()
         val project = currentProject()
         return try {
-            val marked = ReadAction.compute<Int, RuntimeException> { markAllViewed(project) }
+            val marked = runReadAction { markAllViewed(project) }
             "Marked $marked file(s) as viewed."
         } finally {
             SafeRefresh.refreshFileStatuses(project)
@@ -87,7 +87,7 @@ class LocalReviewToolset : McpToolset {
         if (!mcpToolsEnabled()) noToolPermitted()
         val project = currentProject()
         return try {
-            ReadAction.compute<String, RuntimeException> {
+            runReadAction {
                 pathResultsToJson(markFiles(project, paths))
             }
         } finally {

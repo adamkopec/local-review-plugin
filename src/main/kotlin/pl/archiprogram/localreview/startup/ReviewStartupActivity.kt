@@ -1,7 +1,7 @@
 package pl.archiprogram.localreview.startup
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.vcs.changes.ChangeListManager
@@ -12,7 +12,7 @@ import pl.archiprogram.localreview.hash.ContentHasher
 import pl.archiprogram.localreview.settings.LocalReviewSettings
 import pl.archiprogram.localreview.state.ReviewStateService
 import pl.archiprogram.localreview.ui.CounterWidgetFactory
-import pl.archiprogram.localreview.vcs.KeyDeriver
+import pl.archiprogram.localreview.vcs.ChangeSetScanner
 
 class ReviewStartupActivity : ProjectActivity {
 
@@ -46,29 +46,25 @@ class ReviewStartupActivity : ProjectActivity {
         val service = ReviewStateService.getInstance(project)
         val hasher = ContentHasher.getInstance()
 
-        val current = mutableSetOf<pl.archiprogram.localreview.state.Key>()
-        val rehash = mutableMapOf<pl.archiprogram.localreview.state.Key, String>()
-
-        ReadAction.run<RuntimeException> {
-            if (project.isDisposed) return@run
-            val clm = ChangeListManager.getInstance(project)
-            for (change in clm.allChanges) {
-                val file = change.afterRevision?.file ?: change.beforeRevision?.file ?: continue
-                val key = KeyDeriver.keyFor(project, file) ?: continue
-                current.add(key)
-                if (service.isViewed(key)) {
-                    val vf = file.virtualFile ?: continue
-                    val hex = hasher.hash(vf) ?: continue
-                    rehash[key] = hex
-                }
+        val result = runReadAction {
+            if (project.isDisposed) null
+            else {
+                val clm = ChangeListManager.getInstance(project)
+                ChangeSetScanner.scan(
+                    project = project,
+                    changes = clm.allChanges,
+                    unversionedPaths = clm.unversionedFilesPaths,
+                    isViewed = service::isViewed,
+                    hasher = hasher,
+                )
             }
-        }
+        } ?: return
 
         val settings = LocalReviewSettings.getInstance().current()
         service.reconcile(
-            currentChanges = current,
-            renames = emptyMap(),
-            rehashedContent = rehash,
+            currentChanges = result.currentChanges,
+            renames = result.renames,
+            rehashedContent = result.rehash,
             settings = settings,
         )
         Logging.trace { "Initial reconcile: ${service.size()} entries remain" }

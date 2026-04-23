@@ -4,7 +4,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
@@ -80,7 +80,7 @@ class ToggleViewedAction : AnAction() {
                 try {
                     for (t in targets) {
                         if (service.isViewed(t.key)) continue
-                        val hash = ReadAction.compute<String?, RuntimeException> {
+                        val hash = runReadAction {
                             if (project.isDisposed) null else t.hash()
                         } ?: continue
                         service.mark(t.key, hash)

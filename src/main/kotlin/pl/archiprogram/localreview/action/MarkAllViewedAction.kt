@@ -3,7 +3,7 @@ package pl.archiprogram.localreview.action
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.VcsDataKeys
@@ -37,7 +37,7 @@ class MarkAllViewedAction : AnAction() {
                 for (change in changes) {
                     val key = change.key(project) ?: continue
                     if (service.isViewed(key)) continue
-                    val hash = ReadAction.compute<String?, RuntimeException> {
+                    val hash = runReadAction {
                         if (project.isDisposed) null else change.hashAfter()
                     } ?: continue
                     service.mark(key, hash)
