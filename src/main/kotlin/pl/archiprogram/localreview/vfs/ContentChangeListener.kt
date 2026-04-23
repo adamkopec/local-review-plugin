@@ -1,6 +1,6 @@
 package pl.archiprogram.localreview.vfs
 
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.ProjectManager
@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.concurrency.AppExecutorUtil
 import pl.archiprogram.localreview.hash.ContentHasher
+import pl.archiprogram.localreview.state.Key
 import pl.archiprogram.localreview.state.ReviewStateService
 import pl.archiprogram.localreview.ui.SafeRefresh
 import pl.archiprogram.localreview.vcs.KeyDeriver
@@ -20,7 +21,9 @@ import java.util.concurrent.ExecutorService
  * Application-scoped async listener that rehashes files when their content changes. If a rehash
  * yields a different digest than the one stored when the file was marked, the mark is dropped.
  *
- * Heavy work runs on a bounded executor pool; rehashes acquire a read lock via [runReadAction].
+ * Heavy work runs on a bounded executor pool; rehashes acquire a read lock via
+ * [ReadAction.nonBlocking] — cancels-and-retries if a write action arrives, keeping the UI
+ * responsive. Safe because the rehash work (key derivation, content hashing) is idempotent.
  */
 class ContentChangeListener : AsyncFileListener {
     override fun prepareChange(events: MutableList<out VFileEvent>): ChangeApplier? {
@@ -53,9 +56,9 @@ class ContentChangeListener : AsyncFileListener {
             for (project in ProjectManager.getInstance().openProjects) {
                 if (project.isDisposed) continue
                 val key =
-                    runReadAction {
+                    ReadAction.nonBlocking<Key?> {
                         if (project.isDisposed) null else KeyDeriver.keyFor(project, file)
-                    } ?: continue
+                    }.executeSynchronously() ?: continue
 
                 val service = project.service<ReviewStateService>()
                 val existing = service.getEntry(key) ?: continue
@@ -65,9 +68,9 @@ class ContentChangeListener : AsyncFileListener {
                 // happened before CLM refreshed.
                 val newHash =
                     try {
-                        runReadAction {
+                        ReadAction.nonBlocking<String?> {
                             if (project.isDisposed) null else ContentHasher.getInstance().hash(file)
-                        }
+                        }.executeSynchronously()
                     } catch (e: Throwable) {
                         LOG.debug("Rehash failed for ${file.path}: ${e.message}")
                         null

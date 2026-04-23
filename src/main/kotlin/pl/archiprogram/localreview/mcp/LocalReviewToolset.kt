@@ -4,7 +4,8 @@ import com.intellij.mcpserver.McpToolset
 import com.intellij.mcpserver.annotations.McpDescription
 import com.intellij.mcpserver.annotations.McpTool
 import com.intellij.mcpserver.project
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.readActionBlocking
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.currentCoroutineContext
 import pl.archiprogram.localreview.ui.SafeRefresh
@@ -18,7 +19,8 @@ import pl.archiprogram.localreview.ui.SafeRefresh
  *    integration in Settings → Tools → Local Review;
  *  - resolves the current project from the coroutine context (the bundled MCP infrastructure
  *    populates the project extension before dispatching);
- *  - wraps the real work in a [runReadAction] since it touches VCS and VFS state.
+ *  - wraps VCS/VFS reads in a suspending [readAction] (or [readActionBlocking] where a
+ *    mid-loop write-action cancel would cause under-counting of side-effectful marks).
  *
  * Tools return plain [String]s — list-shaped results are minimal JSON so agents can parse them
  * deterministically. The `internal` logic functions in LocalReviewMcpLogic are directly
@@ -34,7 +36,7 @@ class LocalReviewToolset : McpToolset {
     suspend fun local_review_list_changes(): String {
         if (!mcpToolsEnabled()) noToolPermitted()
         val project = currentProject()
-        return runReadAction {
+        return readAction {
             changeEntriesToJson(listChanges(project))
         }
     }
@@ -49,7 +51,9 @@ class LocalReviewToolset : McpToolset {
         if (!mcpToolsEnabled()) noToolPermitted()
         val project = currentProject()
         return try {
-            val marked = runReadAction { markAllViewed(project) }
+            // readActionBlocking (WBRA): markAllViewed has idempotent side-effects on
+            // ReviewStateService — cancelling mid-loop would under-report the returned count.
+            val marked = readActionBlocking { markAllViewed(project) }
             "Marked $marked file(s) as viewed."
         } finally {
             SafeRefresh.refreshFileStatuses(project)
@@ -86,7 +90,8 @@ class LocalReviewToolset : McpToolset {
         if (!mcpToolsEnabled()) noToolPermitted()
         val project = currentProject()
         return try {
-            runReadAction {
+            // readActionBlocking: see `local_review_mark_all_viewed` — same side-effect concern.
+            readActionBlocking {
                 pathResultsToJson(markFiles(project, paths))
             }
         } finally {

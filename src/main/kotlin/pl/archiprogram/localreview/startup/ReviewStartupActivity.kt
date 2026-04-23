@@ -1,7 +1,7 @@
 package pl.archiprogram.localreview.startup
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.vcs.changes.ChangeListManager
@@ -46,7 +46,7 @@ class ReviewStartupActivity : ProjectActivity {
         val hasher = ContentHasher.getInstance()
 
         val result =
-            runReadAction {
+            ReadAction.nonBlocking<ChangeSetScanner.Result?> {
                 if (project.isDisposed) {
                     null
                 } else {
@@ -59,7 +59,7 @@ class ReviewStartupActivity : ProjectActivity {
                         hasher = hasher,
                     )
                 }
-            } ?: return
+            }.executeSynchronously() ?: return
 
         val settings = LocalReviewSettings.getInstance().current()
         service.reconcile(

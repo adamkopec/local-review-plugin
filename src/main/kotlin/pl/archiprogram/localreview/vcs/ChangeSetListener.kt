@@ -1,6 +1,6 @@
 package pl.archiprogram.localreview.vcs
 
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
@@ -36,7 +36,7 @@ class ChangeSetListener(private val project: Project) : ChangeListListener {
 
         val result =
             try {
-                runReadAction {
+                ReadAction.nonBlocking<ChangeSetScanner.Result> {
                     ChangeSetScanner.scan(
                         project = project,
                         changes = clm.allChanges,
@@ -44,7 +44,7 @@ class ChangeSetListener(private val project: Project) : ChangeListListener {
                         isViewed = service::isViewed,
                         hasher = hasher,
                     )
-                }
+                }.executeSynchronously()
             } catch (e: Exception) {
                 LOG.warn("Reconcile failed: ${e.message}", e)
                 return
