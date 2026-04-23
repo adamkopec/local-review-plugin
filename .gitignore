@@ -18,3 +18,4 @@ bin/
 # Kover / JaCoCo
 .kover/
 *.log
+.kotlin/
