@@ -10,8 +10,7 @@ import org.junit.Test
  *  - forgets to register the toolset with its fully-qualified class name.
  */
 class PluginManifestTest {
-
-    @Test fun plugin_xml_declares_mcp_namespace() {
+    @Test fun pluginXmlDeclaresMcpNamespace() {
         val xml = readResource("META-INF/plugin.xml")
         assertTrue(
             "plugin.xml must declare extensions under com.intellij.mcpServer; " +
@@ -20,11 +19,12 @@ class PluginManifestTest {
         )
     }
 
-    @Test fun plugin_xml_registers_the_toolset_with_its_fully_qualified_class() {
+    @Test fun pluginXmlRegistersTheToolsetWithItsFullyQualifiedClass() {
         val xml = readResource("META-INF/plugin.xml")
-        val pattern = Regex(
-            """<mcpToolset\s+implementation="(pl\.archiprogram\.localreview\.mcp\.[A-Za-z]+)"\s*/>""",
-        )
+        val pattern =
+            Regex(
+                """<mcpToolset\s+implementation="(pl\.archiprogram\.localreview\.mcp\.[A-Za-z]+)"\s*/>""",
+            )
         val impls = pattern.findAll(xml).map { it.groupValues[1] }.toSet()
 
         assertEquals(
@@ -35,8 +35,9 @@ class PluginManifestTest {
     }
 
     private fun readResource(path: String): String {
-        val stream = javaClass.classLoader.getResourceAsStream(path)
-            ?: error("Missing classpath resource: $path")
+        val stream =
+            javaClass.classLoader.getResourceAsStream(path)
+                ?: error("Missing classpath resource: $path")
         return stream.bufferedReader().use { it.readText() }
     }
 }

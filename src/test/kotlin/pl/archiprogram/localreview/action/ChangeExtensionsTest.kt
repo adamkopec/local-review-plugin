@@ -23,61 +23,66 @@ import pl.archiprogram.localreview.hash.ContentHasher
  * silently skip deleted files.
  */
 class ChangeExtensionsTest {
-
     @After
     fun tearDown() {
         unmockkAll()
     }
 
-    @Test fun hashAfter_deletion_returns_sentinel() {
+    @Test fun hashAfterDeletionReturnsSentinel() {
         // A deletion has beforeRevision != null, afterRevision == null.
         val beforeFile = mockk<FilePath>(relaxed = true)
-        val beforeRev = mockk<ContentRevision>(relaxed = true) {
-            every { file } returns beforeFile
-        }
-        val change = mockk<Change>(relaxed = true) {
-            every { afterRevision } returns null
-            every { beforeRevision } returns beforeRev
-        }
+        val beforeRev =
+            mockk<ContentRevision>(relaxed = true) {
+                every { file } returns beforeFile
+            }
+        val change =
+            mockk<Change>(relaxed = true) {
+                every { afterRevision } returns null
+                every { beforeRevision } returns beforeRev
+            }
 
         assertEquals(DELETED_HASH, change.hashAfter())
     }
 
-    @Test fun hashAfter_neither_revision_returns_null() {
+    @Test fun hashAfterNeitherRevisionReturnsNull() {
         // Degenerate: no before, no after — not a real Change, but defensive.
-        val change = mockk<Change>(relaxed = true) {
-            every { afterRevision } returns null
-            every { beforeRevision } returns null
-        }
+        val change =
+            mockk<Change>(relaxed = true) {
+                every { afterRevision } returns null
+                every { beforeRevision } returns null
+            }
 
         assertNull(change.hashAfter())
     }
 
-    @Test fun hashAfter_modification_hashes_the_after_virtualfile() {
+    @Test fun hashAfterModificationHashesTheAfterVirtualfile() {
         val vf = mockk<VirtualFile>(relaxed = true)
         val afterFile = mockk<FilePath>(relaxed = true) { every { virtualFile } returns vf }
         val afterRev = mockk<ContentRevision>(relaxed = true) { every { file } returns afterFile }
-        val change = mockk<Change>(relaxed = true) {
-            every { afterRevision } returns afterRev
-            every { beforeRevision } returns null
-        }
-        val hasher = mockk<ContentHasher>(relaxed = true) {
-            every { hash(vf) } returns "deadbeef"
-        }
+        val change =
+            mockk<Change>(relaxed = true) {
+                every { afterRevision } returns afterRev
+                every { beforeRevision } returns null
+            }
+        val hasher =
+            mockk<ContentHasher>(relaxed = true) {
+                every { hash(vf) } returns "deadbeef"
+            }
         mockkObject(ContentHasher.Companion)
         every { ContentHasher.getInstance() } returns hasher
 
         assertEquals("deadbeef", change.hashAfter())
     }
 
-    @Test fun hashAfter_modification_without_virtualfile_returns_null() {
+    @Test fun hashAfterModificationWithoutVirtualfileReturnsNull() {
         // e.g. a pending delete+recreate where the VFS hasn't caught up yet.
         val afterFile = mockk<FilePath>(relaxed = true) { every { virtualFile } returns null }
         val afterRev = mockk<ContentRevision>(relaxed = true) { every { file } returns afterFile }
-        val change = mockk<Change>(relaxed = true) {
-            every { afterRevision } returns afterRev
-            every { beforeRevision } returns null
-        }
+        val change =
+            mockk<Change>(relaxed = true) {
+                every { afterRevision } returns afterRev
+                every { beforeRevision } returns null
+            }
 
         assertNull(change.hashAfter())
     }

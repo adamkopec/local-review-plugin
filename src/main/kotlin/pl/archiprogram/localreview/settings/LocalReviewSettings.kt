@@ -13,7 +13,6 @@ import com.intellij.openapi.components.service
     storages = [Storage("localReview.xml")],
 )
 class LocalReviewSettings : PersistentStateComponent<LocalReviewSettings.State> {
-
     data class State(
         var ttlDays: Int = DEFAULT_TTL_DAYS,
         var perBranchCap: Int = DEFAULT_PER_BRANCH_CAP,
@@ -37,7 +36,6 @@ class LocalReviewSettings : PersistentStateComponent<LocalReviewSettings.State> 
         const val DEFAULT_TTL_DAYS = 30
         const val DEFAULT_PER_BRANCH_CAP = 500
 
-        fun getInstance(): LocalReviewSettings =
-            ApplicationManager.getApplication().service()
+        fun getInstance(): LocalReviewSettings = ApplicationManager.getApplication().service()
     }
 }

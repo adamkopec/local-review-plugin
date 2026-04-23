@@ -25,7 +25,6 @@ import pl.archiprogram.localreview.ui.SafeRefresh
  * unit-tested so we don't need a running platform / coroutine infrastructure in most tests.
  */
 class LocalReviewToolset : McpToolset {
-
     @McpTool(name = "local_review_list_changes")
     @McpDescription(
         "List files in the current local changeset with their viewed status. Returns a JSON " +

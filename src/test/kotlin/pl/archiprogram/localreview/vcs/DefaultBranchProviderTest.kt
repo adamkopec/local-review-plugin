@@ -16,7 +16,6 @@ import org.junit.Test
 import pl.archiprogram.localreview.state.Key
 
 class DefaultBranchProviderTest {
-
     private val project: Project = mockk(relaxed = true)
     private val mgr: GitRepositoryManager = mockk()
     private val provider = DefaultBranchProvider()
@@ -33,7 +32,7 @@ class DefaultBranchProviderTest {
         unmockkAll()
     }
 
-    @Test fun currentBranch_repoFoundByPath_returnsBranchName() {
+    @Test fun currentBranchRepoFoundByPathReturnsBranchName() {
         val repoRoot = mockk<VirtualFile> { every { path } returns "/repo" }
         val repo = fakeRepo(rootPath = "/repo", branchName = "main")
         every { mgr.repositories } returns listOf(repo)
@@ -41,7 +40,7 @@ class DefaultBranchProviderTest {
         assertEquals("main", provider.currentBranch(project, repoRoot))
     }
 
-    @Test fun currentBranch_detachedHead_returnsDetachedSentinel() {
+    @Test fun currentBranchDetachedHeadReturnsDetachedSentinel() {
         val repoRoot = mockk<VirtualFile> { every { path } returns "/repo" }
         val repo = fakeRepo(rootPath = "/repo", branchName = null)
         every { mgr.repositories } returns listOf(repo)
@@ -49,7 +48,7 @@ class DefaultBranchProviderTest {
         assertEquals(Key.DETACHED, provider.currentBranch(project, repoRoot))
     }
 
-    @Test fun currentBranch_noRepoMatchesPath_returnsNoBranchSentinel() {
+    @Test fun currentBranchNoRepoMatchesPathReturnsNoBranchSentinel() {
         val repoRoot = mockk<VirtualFile> { every { path } returns "/other" }
         val repo = fakeRepo(rootPath = "/repo", branchName = "main")
         every { mgr.repositories } returns listOf(repo)
@@ -57,20 +56,21 @@ class DefaultBranchProviderTest {
         assertEquals(Key.NO_BRANCH, provider.currentBranch(project, repoRoot))
     }
 
-    @Test fun currentBranch_pathStringMatch_ignoresVirtualFileIdentity() {
+    @Test fun currentBranchPathStringMatchIgnoresVirtualFileIdentity() {
         // Two different VirtualFile instances with the same path string must still match.
         val callerRoot = mockk<VirtualFile> { every { path } returns "/repo" }
         val cachedRoot = mockk<VirtualFile> { every { path } returns "/repo" }
-        val repo = mockk<GitRepository> {
-            every { root } returns cachedRoot
-            every { currentBranch } returns fakeBranch("main")
-        }
+        val repo =
+            mockk<GitRepository> {
+                every { root } returns cachedRoot
+                every { currentBranch } returns fakeBranch("main")
+            }
         every { mgr.repositories } returns listOf(repo)
 
         assertEquals("main", provider.currentBranch(project, callerRoot))
     }
 
-    @Test fun currentBranch_disposedProject_returnsNoBranchSentinel() {
+    @Test fun currentBranchDisposedProjectReturnsNoBranchSentinel() {
         every { project.isDisposed } returns true
 
         assertEquals(
@@ -79,14 +79,17 @@ class DefaultBranchProviderTest {
         )
     }
 
-    @Test fun currentBranch_managerThrows_returnsNoBranchSentinel() {
+    @Test fun currentBranchManagerThrowsReturnsNoBranchSentinel() {
         every { mgr.repositories } throws RuntimeException("simulated Git4Idea failure")
         val repoRoot = mockk<VirtualFile> { every { path } returns "/repo" }
 
         assertEquals(Key.NO_BRANCH, provider.currentBranch(project, repoRoot))
     }
 
-    private fun fakeRepo(rootPath: String, branchName: String?): GitRepository {
+    private fun fakeRepo(
+        rootPath: String,
+        branchName: String?,
+    ): GitRepository {
         val root = mockk<VirtualFile> { every { path } returns rootPath }
         return mockk {
             every { this@mockk.root } returns root
@@ -94,6 +97,5 @@ class DefaultBranchProviderTest {
         }
     }
 
-    private fun fakeBranch(name: String): GitLocalBranch =
-        mockk { every { this@mockk.name } returns name }
+    private fun fakeBranch(name: String): GitLocalBranch = mockk { every { this@mockk.name } returns name }
 }

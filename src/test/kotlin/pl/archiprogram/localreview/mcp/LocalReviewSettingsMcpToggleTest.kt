@@ -11,15 +11,14 @@ import pl.archiprogram.localreview.settings.LocalReviewSettings
  * flips the default, this test trips before the change ships.
  */
 class LocalReviewSettingsMcpToggleTest {
-
-    @Test fun default_state_has_mcp_tools_enabled() {
+    @Test fun defaultStateHasMcpToolsEnabled() {
         assertTrue(
             "MCP tools must default to ON; changing this requires a conscious user decision.",
             LocalReviewSettings.State().enableMcpTools,
         )
     }
 
-    @Test fun disabled_toggle_round_trips_through_persistence() {
+    @Test fun disabledToggleRoundTripsThroughPersistence() {
         val settings = LocalReviewSettings()
         val modified = LocalReviewSettings.State(enableMcpTools = false)
 
@@ -29,7 +28,7 @@ class LocalReviewSettingsMcpToggleTest {
         assertEquals(false, settings.getState().enableMcpTools)
     }
 
-    @Test fun re_enabled_toggle_round_trips() {
+    @Test fun reEnabledToggleRoundTrips() {
         val settings = LocalReviewSettings()
         settings.loadState(LocalReviewSettings.State(enableMcpTools = false))
         settings.loadState(LocalReviewSettings.State(enableMcpTools = true))

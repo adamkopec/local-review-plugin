@@ -1,6 +1,5 @@
 package pl.archiprogram.localreview.ui
 
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
@@ -25,22 +24,30 @@ import javax.swing.SwingUtilities
  * the inline decoration but nothing crashes. The grouping policy and counter widget still work.
  */
 class CommitViewRendererInstaller : ProjectActivity {
-
     override suspend fun execute(project: Project) {
         if (project.isDisposed) return
         LOG.info("LocalReview: CommitViewRendererInstaller starting for project ${project.name}")
         val conn = project.messageBus.connect()
-        conn.subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
-            override fun stateChanged(toolWindowManager: ToolWindowManager) {
-                scheduleInstall(project)
-            }
-        })
-        conn.subscribe(ReviewStateService.TOPIC, object : ReviewStateService.Listener {
-            override fun stateChanged() = schedulePaint(project)
-        })
-        conn.subscribe(ChangeListListener.TOPIC, object : ChangeListListener {
-            override fun changeListUpdateDone() = schedulePaint(project)
-        })
+        conn.subscribe(
+            ToolWindowManagerListener.TOPIC,
+            object : ToolWindowManagerListener {
+                override fun stateChanged(toolWindowManager: ToolWindowManager) {
+                    scheduleInstall(project)
+                }
+            },
+        )
+        conn.subscribe(
+            ReviewStateService.TOPIC,
+            object : ReviewStateService.Listener {
+                override fun stateChanged() = schedulePaint(project)
+            },
+        )
+        conn.subscribe(
+            ChangeListListener.TOPIC,
+            object : ChangeListListener {
+                override fun changeListUpdateDone() = schedulePaint(project)
+            },
+        )
         scheduleInstall(project)
     }
 
@@ -67,7 +74,10 @@ class CommitViewRendererInstaller : ProjectActivity {
             SwingUtilities.invokeLater {
                 if (project.isDisposed) return@invokeLater
                 project.getUserData(TREES_KEY)?.forEach { tree ->
-                    try { tree.repaint() } catch (_: Throwable) {}
+                    try {
+                        tree.repaint()
+                    } catch (_: Throwable) {
+                    }
                 }
             }
         }
@@ -87,14 +97,20 @@ class CommitViewRendererInstaller : ProjectActivity {
             }
         }
 
-        private fun walk(root: Component, action: (ChangesListView) -> Unit) {
+        private fun walk(
+            root: Component,
+            action: (ChangesListView) -> Unit,
+        ) {
             if (root is ChangesListView) action(root)
             if (root is Container) {
                 for (child in root.components) walk(child, action)
             }
         }
 
-        private fun installOn(project: Project, tree: ChangesListView) {
+        private fun installOn(
+            project: Project,
+            tree: ChangesListView,
+        ) {
             if (ClientProperty.get(tree, MARKER) == true) {
                 LOG.info("LocalReview: renderer already installed on ${tree.javaClass.simpleName}")
                 return
@@ -108,10 +124,13 @@ class CommitViewRendererInstaller : ProjectActivity {
             tree.cellRenderer = ViewedCellRenderer(project, existing)
             ClientProperty.put(tree, MARKER, true)
 
-            val trees = project.getUserData(TREES_KEY)
-                ?: mutableListOf<JTree>().also { project.putUserData(TREES_KEY, it) }
+            val trees =
+                project.getUserData(TREES_KEY)
+                    ?: mutableListOf<JTree>().also { project.putUserData(TREES_KEY, it) }
             if (tree !in trees) trees += tree
-            LOG.info("LocalReview: installed ViewedCellRenderer on ${tree.javaClass.simpleName} (wrapping ${existing.javaClass.simpleName})")
+            LOG.info(
+                "LocalReview: installed ViewedCellRenderer on ${tree.javaClass.simpleName} (wrapping ${existing.javaClass.simpleName})",
+            )
         }
     }
 }

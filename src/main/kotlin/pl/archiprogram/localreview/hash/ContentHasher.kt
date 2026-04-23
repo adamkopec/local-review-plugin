@@ -16,10 +16,10 @@ import java.security.MessageDigest
  */
 @Service(Service.Level.APP)
 class ContentHasher {
-
-    private val digestLocal: ThreadLocal<MessageDigest> = ThreadLocal.withInitial {
-        MessageDigest.getInstance("SHA-256")
-    }
+    private val digestLocal: ThreadLocal<MessageDigest> =
+        ThreadLocal.withInitial {
+            MessageDigest.getInstance("SHA-256")
+        }
 
     /** Returns lowercase-hex SHA-256 of [file]'s content, or a fallback digest for oversize files.
      *  Returns `null` when the file cannot be read (e.g. deleted, unreadable). */
@@ -29,7 +29,8 @@ class ContentHasher {
             if (file.length > SIZE_CAP) {
                 fallbackHash(file.length, file.modificationStamp)
             } else {
-                val bytes = file.contentsToByteArray(/* cacheContent = */ false)
+                // cacheContent = false: avoid populating the VFS content cache from hashing passes.
+                val bytes = file.contentsToByteArray(false)
                 digestHex(bytes)
             }
         } catch (e: Exception) {
@@ -42,11 +43,15 @@ class ContentHasher {
     fun hashBytes(bytes: ByteArray): String = digestHex(bytes)
 
     /** For test/benchmark: produce the fallback digest for a given (length, stamp) pair. */
-    fun fallbackHash(length: Long, modificationStamp: Long): String {
-        val buf = ByteBuffer.allocate(Long.SIZE_BYTES * 2)
-            .putLong(length)
-            .putLong(modificationStamp)
-            .array()
+    fun fallbackHash(
+        length: Long,
+        modificationStamp: Long,
+    ): String {
+        val buf =
+            ByteBuffer.allocate(Long.SIZE_BYTES * 2)
+                .putLong(length)
+                .putLong(modificationStamp)
+                .array()
         return digestHex(buf)
     }
 
@@ -72,7 +77,6 @@ class ContentHasher {
         private val HEX = "0123456789abcdef".toCharArray()
         private val LOG = Logger.getInstance(ContentHasher::class.java)
 
-        fun getInstance(): ContentHasher =
-            com.intellij.openapi.application.ApplicationManager.getApplication().service()
+        fun getInstance(): ContentHasher = com.intellij.openapi.application.ApplicationManager.getApplication().service()
     }
 }

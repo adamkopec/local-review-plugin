@@ -15,7 +15,6 @@ import pl.archiprogram.localreview.ui.CounterWidgetFactory
 import pl.archiprogram.localreview.vcs.ChangeSetScanner
 
 class ReviewStartupActivity : ProjectActivity {
-
     override suspend fun execute(project: Project) {
         if (project.isDisposed) return
         Logging.trace { "Startup for project ${project.name}" }
@@ -46,19 +45,21 @@ class ReviewStartupActivity : ProjectActivity {
         val service = ReviewStateService.getInstance(project)
         val hasher = ContentHasher.getInstance()
 
-        val result = runReadAction {
-            if (project.isDisposed) null
-            else {
-                val clm = ChangeListManager.getInstance(project)
-                ChangeSetScanner.scan(
-                    project = project,
-                    changes = clm.allChanges,
-                    unversionedPaths = clm.unversionedFilesPaths,
-                    isViewed = service::isViewed,
-                    hasher = hasher,
-                )
-            }
-        } ?: return
+        val result =
+            runReadAction {
+                if (project.isDisposed) {
+                    null
+                } else {
+                    val clm = ChangeListManager.getInstance(project)
+                    ChangeSetScanner.scan(
+                        project = project,
+                        changes = clm.allChanges,
+                        unversionedPaths = clm.unversionedFilesPaths,
+                        isViewed = service::isViewed,
+                        hasher = hasher,
+                    )
+                }
+            } ?: return
 
         val settings = LocalReviewSettings.getInstance().current()
         service.reconcile(

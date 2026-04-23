@@ -8,36 +8,35 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class KeyTest {
-
-    @Test fun equals_identicalTriples_areEqual() {
+    @Test fun equalsIdenticalTriplesAreEqual() {
         val a = Key("/repo", "main", "/repo/a.kt")
         val b = Key("/repo", "main", "/repo/a.kt")
         assertEquals(a, b)
         assertEquals(a.hashCode(), b.hashCode())
     }
 
-    @Test fun equals_differingRepoRoot_notEqual() {
+    @Test fun equalsDifferingRepoRootNotEqual() {
         assertNotEquals(
             Key("/r1", "main", "/r1/a.kt"),
             Key("/r2", "main", "/r1/a.kt"),
         )
     }
 
-    @Test fun equals_differingBranch_notEqual() {
+    @Test fun equalsDifferingBranchNotEqual() {
         assertNotEquals(
             Key("/r", "main", "/r/a.kt"),
             Key("/r", "feature", "/r/a.kt"),
         )
     }
 
-    @Test fun equals_differingPath_notEqual() {
+    @Test fun equalsDifferingPathNotEqual() {
         assertNotEquals(
             Key("/r", "main", "/r/a.kt"),
             Key("/r", "main", "/r/b.kt"),
         )
     }
 
-    @Test fun sentinels_areDistinctAndNonEmpty() {
+    @Test fun sentinelsAreDistinctAndNonEmpty() {
         assertNotNull(Key.NO_VCS)
         assertNotNull(Key.NO_BRANCH)
         assertNotNull(Key.DETACHED)
@@ -49,26 +48,26 @@ class KeyTest {
         assertNotEquals(Key.NO_BRANCH, Key.DETACHED)
     }
 
-    @Test fun sentinels_doNotCollideWithRealBranchNames() {
+    @Test fun sentinelsDoNotCollideWithRealBranchNames() {
         // Angle-bracketed sentinels are illegal Git branch names (`git check-ref-format` rejects them).
         assertTrue(Key.NO_BRANCH.startsWith("<") && Key.NO_BRANCH.endsWith(">"))
         assertTrue(Key.NO_VCS.startsWith("<") && Key.NO_VCS.endsWith(">"))
         assertTrue(Key.DETACHED.startsWith("<") && Key.DETACHED.endsWith(">"))
     }
 
-    @Test fun toString_containsAllThreeFields_forLogging() {
+    @Test fun toStringContainsAllThreeFieldsForLogging() {
         val s = Key("/r", "main", "/r/foo.kt").toString()
         assertTrue(s.contains("/r"))
         assertTrue(s.contains("main"))
         assertTrue(s.contains("/r/foo.kt"))
     }
 
-    @Test fun hashCode_consistentAcrossInvocations() {
+    @Test fun hashCodeConsistentAcrossInvocations() {
         val k = Key("/r", "main", "/r/a.kt")
         assertEquals(k.hashCode(), k.hashCode())
     }
 
-    @Test fun equality_symmetricAndReflexive() {
+    @Test fun equalitySymmetricAndReflexive() {
         val a = Key("/r", "main", "/r/a.kt")
         val b = a.copy()
         assertEquals(a, a)

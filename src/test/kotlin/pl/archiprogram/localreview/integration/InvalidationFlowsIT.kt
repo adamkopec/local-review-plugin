@@ -3,7 +3,6 @@ package pl.archiprogram.localreview.integration
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import pl.archiprogram.localreview.hash.ContentHasher
@@ -23,7 +22,6 @@ import java.util.concurrent.TimeUnit
  * The async hashing pool is swapped for a synchronous executor so assertions are deterministic.
  */
 class InvalidationFlowsIT : BasePlatformTestCase() {
-
     private lateinit var service: ReviewStateService
     private lateinit var hasher: ContentHasher
 
@@ -47,7 +45,7 @@ class InvalidationFlowsIT : BasePlatformTestCase() {
         }
     }
 
-    fun test_documentEdit_dropsViewedMark() {
+    fun testDocumentEditDropsViewedMark() {
         val file = myFixture.addFileToProject("src/Foo.kt", "original content").virtualFile
         val key = KeyDeriver.keyFor(project, file)!!
         service.mark(key, hasher.hash(file)!!)
@@ -64,7 +62,7 @@ class InvalidationFlowsIT : BasePlatformTestCase() {
         )
     }
 
-    fun test_vfsSave_withDifferentContent_dropsViewedMark() {
+    fun testVfsSaveWithDifferentContentDropsViewedMark() {
         val file = myFixture.addFileToProject("src/Bar.kt", "original").virtualFile
         val key = KeyDeriver.keyFor(project, file)!!
         service.mark(key, hasher.hash(file)!!)
@@ -83,7 +81,7 @@ class InvalidationFlowsIT : BasePlatformTestCase() {
         )
     }
 
-    fun test_vfsSave_withIdenticalContent_keepsViewedMark() {
+    fun testVfsSaveWithIdenticalContentKeepsViewedMark() {
         val file = myFixture.addFileToProject("src/Baz.kt", "original").virtualFile
         val key = KeyDeriver.keyFor(project, file)!!
         val originalHash = hasher.hash(file)!!
@@ -101,7 +99,7 @@ class InvalidationFlowsIT : BasePlatformTestCase() {
         )
     }
 
-    fun test_unmarkedFile_vfsEdit_noFalsePositive() {
+    fun testUnmarkedFileVfsEditNoFalsePositive() {
         // A file that was never marked should not become spuriously "marked" by any listener.
         val file = myFixture.addFileToProject("src/Qux.kt", "first").virtualFile
         val key = KeyDeriver.keyFor(project, file)!!
@@ -116,7 +114,7 @@ class InvalidationFlowsIT : BasePlatformTestCase() {
         assertEquals(0, service.size())
     }
 
-    fun test_documentEdit_afterUnmark_doesNotCrash() {
+    fun testDocumentEditAfterUnmarkDoesNotCrash() {
         // Sanity: listener must be tolerant of edits to files it has no entry for.
         val file = myFixture.addFileToProject("src/Qux2.kt", "a").virtualFile
         val key = KeyDeriver.keyFor(project, file)!!
@@ -135,10 +133,18 @@ class InvalidationFlowsIT : BasePlatformTestCase() {
     /** Executor that runs every submitted task synchronously on the caller thread. */
     private class DirectExecutorService : AbstractExecutorService() {
         override fun execute(command: Runnable) = command.run()
+
         override fun shutdown() {}
+
         override fun shutdownNow(): MutableList<Runnable> = mutableListOf()
+
         override fun isShutdown(): Boolean = false
+
         override fun isTerminated(): Boolean = false
-        override fun awaitTermination(timeout: Long, unit: TimeUnit): Boolean = true
+
+        override fun awaitTermination(
+            timeout: Long,
+            unit: TimeUnit,
+        ): Boolean = true
     }
 }

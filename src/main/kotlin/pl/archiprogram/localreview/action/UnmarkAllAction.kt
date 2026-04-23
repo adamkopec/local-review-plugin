@@ -9,7 +9,6 @@ import pl.archiprogram.localreview.state.ReviewStateService
 import pl.archiprogram.localreview.ui.SafeRefresh
 
 class UnmarkAllAction : AnAction() {
-
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
     override fun update(e: AnActionEvent) {

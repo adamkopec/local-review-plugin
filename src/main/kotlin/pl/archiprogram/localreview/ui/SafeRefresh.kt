@@ -10,7 +10,6 @@ import com.intellij.openapi.vcs.FileStatusManager
  * `@ApiStatus.Internal` `scheduleRefresh()` with a stable fallback ([VcsDirtyScopeManager]).
  */
 object SafeRefresh {
-
     fun scheduleChangesViewRefresh(project: Project) {
         if (project.isDisposed) return
         // Only attempt the tree-only refresh via ChangesViewManager. We intentionally do NOT

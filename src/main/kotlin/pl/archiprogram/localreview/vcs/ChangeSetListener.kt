@@ -11,7 +11,6 @@ import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.util.concurrency.AppExecutorUtil
 import pl.archiprogram.localreview.hash.ContentHasher
 import pl.archiprogram.localreview.settings.LocalReviewSettings
-import pl.archiprogram.localreview.state.Key
 import pl.archiprogram.localreview.state.ReviewStateService
 import pl.archiprogram.localreview.ui.SafeRefresh
 
@@ -25,7 +24,6 @@ import pl.archiprogram.localreview.ui.SafeRefresh
  * through the normal edit → invalidate path once the user resolves the conflict.
  */
 class ChangeSetListener(private val project: Project) : ChangeListListener {
-
     override fun changeListUpdateDone() {
         AppExecutorUtil.getAppExecutorService().submit { reconcile() }
     }
@@ -36,28 +34,30 @@ class ChangeSetListener(private val project: Project) : ChangeListListener {
         val clm = ChangeListManager.getInstance(project)
         val hasher = ContentHasher.getInstance()
 
-        val result = try {
-            runReadAction {
-                ChangeSetScanner.scan(
-                    project = project,
-                    changes = clm.allChanges,
-                    unversionedPaths = clm.unversionedFilesPaths,
-                    isViewed = service::isViewed,
-                    hasher = hasher,
-                )
+        val result =
+            try {
+                runReadAction {
+                    ChangeSetScanner.scan(
+                        project = project,
+                        changes = clm.allChanges,
+                        unversionedPaths = clm.unversionedFilesPaths,
+                        isViewed = service::isViewed,
+                        hasher = hasher,
+                    )
+                }
+            } catch (e: Exception) {
+                LOG.warn("Reconcile failed: ${e.message}", e)
+                return
             }
-        } catch (e: Exception) {
-            LOG.warn("Reconcile failed: ${e.message}", e)
-            return
-        }
 
         val settings = LocalReviewSettings.getInstance().current()
-        val stateChanged = service.reconcile(
-            currentChanges = result.currentChanges,
-            renames = result.renames,
-            rehashedContent = result.rehash,
-            settings = settings,
-        )
+        val stateChanged =
+            service.reconcile(
+                currentChanges = result.currentChanges,
+                renames = result.renames,
+                rehashedContent = result.rehash,
+                settings = settings,
+            )
         // CRITICAL: only refresh when state actually changed. Calling SafeRefresh on every
         // CLM update would create a feedback loop (refresh → CLM update → reconcile → refresh).
         if (stateChanged) {

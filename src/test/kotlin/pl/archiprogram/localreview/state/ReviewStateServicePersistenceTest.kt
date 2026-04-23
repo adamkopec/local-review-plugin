@@ -8,7 +8,6 @@ import pl.archiprogram.localreview.settings.LocalReviewSettings
  * hold under the real platform wiring, and that [getState]/[loadState] round-trip losslessly.
  */
 class ReviewStateServicePersistenceTest : BasePlatformTestCase() {
-
     private lateinit var service: ReviewStateService
 
     override fun setUp() {
@@ -17,7 +16,7 @@ class ReviewStateServicePersistenceTest : BasePlatformTestCase() {
         service.clearAll()
     }
 
-    fun test_mark_addsEntry_isViewedReturnsTrue() {
+    fun testMarkAddsEntryIsViewedReturnsTrue() {
         val key = Key("/repo", "main", "/repo/a.kt")
         service.mark(key, "deadbeef", now = 1_000L)
 
@@ -28,7 +27,7 @@ class ReviewStateServicePersistenceTest : BasePlatformTestCase() {
         assertEquals(1_000L, entry.markedAt)
     }
 
-    fun test_unmark_removesEntry() {
+    fun testUnmarkRemovesEntry() {
         val key = Key("/repo", "main", "/repo/a.kt")
         service.mark(key, "h", now = 1L)
         val removed = service.unmark(key)
@@ -37,19 +36,19 @@ class ReviewStateServicePersistenceTest : BasePlatformTestCase() {
         assertEquals(0, service.size())
     }
 
-    fun test_unmark_unknownKey_returnsFalse() {
+    fun testUnmarkUnknownKeyReturnsFalse() {
         val key = Key("/repo", "main", "/repo/nonexistent")
         assertFalse(service.unmark(key))
     }
 
-    fun test_toggle_unmarked_marks() {
+    fun testToggleUnmarkedMarks() {
         val key = Key("/r", "b", "/r/a.kt")
         val marked = service.toggle(key, hashHexIfMarking = "h")
         assertTrue(marked)
         assertTrue(service.isViewed(key))
     }
 
-    fun test_toggle_marked_unmarks() {
+    fun testToggleMarkedUnmarks() {
         val key = Key("/r", "b", "/r/a.kt")
         service.mark(key, "h", 1L)
         val marked = service.toggle(key, hashHexIfMarking = "h")
@@ -57,13 +56,13 @@ class ReviewStateServicePersistenceTest : BasePlatformTestCase() {
         assertFalse(service.isViewed(key))
     }
 
-    fun test_toggle_nullHashForMark_leavesStateUnchanged() {
+    fun testToggleNullHashForMarkLeavesStateUnchanged() {
         val key = Key("/r", "b", "/r/a.kt")
         service.toggle(key, hashHexIfMarking = null)
         assertFalse(service.isViewed(key))
     }
 
-    fun test_clearAll_removesEverything_returnsCount() {
+    fun testClearAllRemovesEverythingReturnsCount() {
         service.mark(Key("/r", "b", "/r/a"), "h1", 1L)
         service.mark(Key("/r", "b", "/r/b"), "h2", 2L)
         val removed = service.clearAll()
@@ -71,7 +70,7 @@ class ReviewStateServicePersistenceTest : BasePlatformTestCase() {
         assertEquals(0, service.size())
     }
 
-    fun test_persistenceRoundTrip_nonEmpty_matchesOriginal() {
+    fun testPersistenceRoundTripNonEmptyMatchesOriginal() {
         val k1 = Key("/r", "main", "/r/a")
         val k2 = Key("/r", "main", "/r/b")
         service.mark(k1, "h1", 1_000L)
@@ -90,7 +89,7 @@ class ReviewStateServicePersistenceTest : BasePlatformTestCase() {
         assertEquals(2, service.size())
     }
 
-    fun test_getState_containsAllEntries_withVersionField() {
+    fun testGetStateContainsAllEntriesWithVersionField() {
         service.mark(Key("/r", "m", "/r/a"), "h", 1L)
         val state = service.state
         assertEquals(State.CURRENT_VERSION, state.version)
@@ -98,7 +97,7 @@ class ReviewStateServicePersistenceTest : BasePlatformTestCase() {
         assertEquals("h", state.entries[0].hashHex)
     }
 
-    fun test_reconcile_dropsEntries_notBackedByCurrentChanges() {
+    fun testReconcileDropsEntriesNotBackedByCurrentChanges() {
         val keep = Key("/r", "m", "/r/keep")
         val drop = Key("/r", "m", "/r/drop")
         service.mark(keep, "h1", 1L)
@@ -116,7 +115,7 @@ class ReviewStateServicePersistenceTest : BasePlatformTestCase() {
         assertFalse(service.isViewed(drop))
     }
 
-    fun test_reconcile_reKeysRenames() {
+    fun testReconcileReKeysRenames() {
         val oldKey = Key("/r", "m", "/r/old.kt")
         val newKey = Key("/r", "m", "/r/new.kt")
         service.mark(oldKey, "h", 1L)
@@ -134,7 +133,7 @@ class ReviewStateServicePersistenceTest : BasePlatformTestCase() {
         assertEquals("h", service.getEntry(newKey)!!.hashHex)
     }
 
-    fun test_reconcile_dropsEntry_onHashMismatch() {
+    fun testReconcileDropsEntryOnHashMismatch() {
         val key = Key("/r", "m", "/r/a")
         service.mark(key, "oldHash", 1L)
 
@@ -149,7 +148,7 @@ class ReviewStateServicePersistenceTest : BasePlatformTestCase() {
         assertFalse(service.isViewed(key))
     }
 
-    fun test_reconcile_keepsEntry_whenHashMatches() {
+    fun testReconcileKeepsEntryWhenHashMatches() {
         val key = Key("/r", "m", "/r/a")
         service.mark(key, "sameHash", 1L)
 
@@ -164,7 +163,7 @@ class ReviewStateServicePersistenceTest : BasePlatformTestCase() {
         assertTrue(service.isViewed(key))
     }
 
-    fun test_reconcile_TTLeviction_dropsOldEntries() {
+    fun testReconcileTTLevictionDropsOldEntries() {
         val key = Key("/r", "m", "/r/a")
         val day = 24L * 60 * 60 * 1000
         service.mark(key, "h", now = 0L)
@@ -180,7 +179,7 @@ class ReviewStateServicePersistenceTest : BasePlatformTestCase() {
         assertFalse(service.isViewed(key))
     }
 
-    fun test_reconcile_perBranchCap_evictsOldestByMarkedAt() {
+    fun testReconcilePerBranchCapEvictsOldestByMarkedAt() {
         for (i in 0 until 10) {
             service.mark(Key("/r", "m", "/r/$i"), "h$i", now = i.toLong())
         }
@@ -203,7 +202,7 @@ class ReviewStateServicePersistenceTest : BasePlatformTestCase() {
         }
     }
 
-    fun test_clearBranch_scopedToRepoAndBranch() {
+    fun testClearBranchScopedToRepoAndBranch() {
         service.mark(Key("/r", "main", "/r/a"), "h", 1L)
         service.mark(Key("/r", "feature", "/r/b"), "h", 2L)
         service.mark(Key("/other", "main", "/other/c"), "h", 3L)

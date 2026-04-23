@@ -9,11 +9,11 @@ import pl.archiprogram.localreview.LocalReviewBundle
 import javax.swing.JComponent
 
 class LocalReviewConfigurable : Configurable {
-
     private val settings = LocalReviewSettings.getInstance()
-    private val model = LocalReviewSettings.State().apply {
-        copyFrom(settings.current())
-    }
+    private val model =
+        LocalReviewSettings.State().apply {
+            copyFrom(settings.current())
+        }
 
     private var panel: JComponent? = null
     private var groupingCheckBox: JBCheckBox? = null
@@ -34,18 +34,21 @@ class LocalReviewConfigurable : Configurable {
                         .bindIntText(model::perBranchCap)
                 }
                 row {
-                    groupingCheckBox = checkBox(LocalReviewBundle.message("settings.enableGrouping"))
-                        .bindSelected(model::enableGrouping).component
+                    groupingCheckBox =
+                        checkBox(LocalReviewBundle.message("settings.enableGrouping"))
+                            .bindSelected(model::enableGrouping).component
                 }
                 row {
-                    debugLoggingCheckBox = checkBox(LocalReviewBundle.message("settings.enableDebugLogging"))
-                        .bindSelected(model::enableDebugLogging).component
+                    debugLoggingCheckBox =
+                        checkBox(LocalReviewBundle.message("settings.enableDebugLogging"))
+                            .bindSelected(model::enableDebugLogging).component
                 }
                 row {
-                    mcpToolsCheckBox = checkBox(LocalReviewBundle.message("settings.enableMcpTools"))
-                        .bindSelected(model::enableMcpTools)
-                        .comment(LocalReviewBundle.message("settings.enableMcpTools.comment"))
-                        .component
+                    mcpToolsCheckBox =
+                        checkBox(LocalReviewBundle.message("settings.enableMcpTools"))
+                            .bindSelected(model::enableMcpTools)
+                            .comment(LocalReviewBundle.message("settings.enableMcpTools.comment"))
+                            .component
                 }
             }
         }.also { panel = it }

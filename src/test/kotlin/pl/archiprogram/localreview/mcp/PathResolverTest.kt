@@ -20,7 +20,6 @@ import java.io.File
 import java.nio.file.Files
 
 class PathResolverTest {
-
     private val project: Project = mockk(relaxed = true)
     private val lfs: LocalFileSystem = mockk(relaxed = true)
 
@@ -36,12 +35,12 @@ class PathResolverTest {
         unmockkAll()
     }
 
-    @Test fun blank_path_returns_BlankPath() {
+    @Test fun blankPathReturnsBlankPath() {
         val outcome = PathResolver.resolve(project, "   ")
         assertSame(PathResolver.Outcome.BlankPath, outcome)
     }
 
-    @Test fun absolute_path_that_doesnt_exist_returns_NotFound() {
+    @Test fun absolutePathThatDoesntExistReturnsNotFound() {
         every { lfs.findFileByIoFile(any()) } returns null
 
         val outcome = PathResolver.resolve(project, "/does/not/exist.kt")
@@ -49,7 +48,7 @@ class PathResolverTest {
         assertSame(PathResolver.Outcome.NotFound, outcome)
     }
 
-    @Test fun directory_returns_IsDirectory() {
+    @Test fun directoryReturnsIsDirectory() {
         val vf = virtualFile(isDirectory = true, isValid = true)
         every { lfs.findFileByIoFile(any()) } returns vf
 
@@ -58,7 +57,7 @@ class PathResolverTest {
         assertSame(PathResolver.Outcome.IsDirectory, outcome)
     }
 
-    @Test fun invalid_virtual_file_returns_NotFound() {
+    @Test fun invalidVirtualFileReturnsNotFound() {
         val vf = virtualFile(isDirectory = false, isValid = false)
         every { lfs.findFileByIoFile(any()) } returns vf
 
@@ -67,7 +66,7 @@ class PathResolverTest {
         assertSame(PathResolver.Outcome.NotFound, outcome)
     }
 
-    @Test fun file_outside_vcs_returns_OutsideVcs() {
+    @Test fun fileOutsideVcsReturnsOutsideVcs() {
         val vf = virtualFile(isDirectory = false, isValid = true)
         every { lfs.findFileByIoFile(any()) } returns vf
         every { KeyDeriver.keyFor(project, vf) } returns null
@@ -77,7 +76,7 @@ class PathResolverTest {
         assertSame(PathResolver.Outcome.OutsideVcs, outcome)
     }
 
-    @Test fun absolute_path_resolves_to_Key() {
+    @Test fun absolutePathResolvesToKey() {
         val vf = virtualFile(isDirectory = false, isValid = true)
         val key = Key("/repo", "main", "/repo/src/x.kt")
         every { lfs.findFileByIoFile(any()) } returns vf
@@ -90,13 +89,14 @@ class PathResolverTest {
         assertSame(vf, outcome.file)
     }
 
-    @Test fun project_relative_path_resolves_against_basePath() {
+    @Test fun projectRelativePathResolvesAgainstBasePath() {
         // Use a real temp directory so the canonicalization step has something concrete to chew on.
         val baseDir = Files.createTempDirectory("localreview-path-test").toFile()
-        val target = File(baseDir, "src/x.kt").also {
-            it.parentFile.mkdirs()
-            it.writeText("hello")
-        }
+        val target =
+            File(baseDir, "src/x.kt").also {
+                it.parentFile.mkdirs()
+                it.writeText("hello")
+            }
         every { project.basePath } returns baseDir.absolutePath
 
         val vf = virtualFile(isDirectory = false, isValid = true)
@@ -114,7 +114,7 @@ class PathResolverTest {
         baseDir.deleteRecursively()
     }
 
-    @Test fun project_relative_path_with_null_basePath_returns_NotFound() {
+    @Test fun projectRelativePathWithNullBasePathReturnsNotFound() {
         every { project.basePath } returns null
         every { lfs.findFileByIoFile(any()) } returns null
 
@@ -123,7 +123,10 @@ class PathResolverTest {
         assertSame(PathResolver.Outcome.NotFound, outcome)
     }
 
-    private fun virtualFile(isDirectory: Boolean, isValid: Boolean): VirtualFile =
+    private fun virtualFile(
+        isDirectory: Boolean,
+        isValid: Boolean,
+    ): VirtualFile =
         mockk(relaxed = true) {
             every { this@mockk.isDirectory } returns isDirectory
             every { this@mockk.isValid } returns isValid

@@ -24,7 +24,6 @@ class ViewedCellRenderer(
     private val project: Project,
     private val delegate: TreeCellRenderer,
 ) : TreeCellRenderer {
-
     private val loggedCall = java.util.concurrent.atomic.AtomicBoolean(false)
     private val loggedLabel = java.util.concurrent.atomic.AtomicBoolean(false)
     private val loggedDecorate = java.util.concurrent.atomic.AtomicBoolean(false)
@@ -41,9 +40,16 @@ class ViewedCellRenderer(
         if (loggedCall.compareAndSet(false, true)) {
             LOG.info("LocalReview: ViewedCellRenderer.getTreeCellRendererComponent first call")
         }
-        val component = delegate.getTreeCellRendererComponent(
-            tree, value, selected, expanded, leaf, row, hasFocus,
-        )
+        val component =
+            delegate.getTreeCellRendererComponent(
+                tree,
+                value,
+                selected,
+                expanded,
+                leaf,
+                row,
+                hasFocus,
+            )
         if (project.isDisposed) return component
 
         val label = findColoredComponent(component)
@@ -60,10 +66,11 @@ class ViewedCellRenderer(
             if (loggedDecorate.compareAndSet(false, true)) {
                 LOG.info("LocalReview: decorating viewed row for key=$key (label=${label.javaClass.name})")
             }
-            val attrs = SimpleTextAttributes(
-                SimpleTextAttributes.STYLE_BOLD,
-                com.intellij.ui.JBColor(0x208A3C, 0x73BF78),
-            )
+            val attrs =
+                SimpleTextAttributes(
+                    SimpleTextAttributes.STYLE_BOLD,
+                    com.intellij.ui.JBColor(0x208A3C, 0x73BF78),
+                )
             label.append("   ✓", attrs)
         }
         return component

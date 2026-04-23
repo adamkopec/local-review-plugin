@@ -4,7 +4,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.registry.Registry
 
 object Logging {
-
     @PublishedApi
     internal val LOG: Logger = Logger.getInstance("#pl.archiprogram.localreview")
 

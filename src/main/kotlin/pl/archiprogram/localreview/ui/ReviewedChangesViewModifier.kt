@@ -19,7 +19,6 @@ import pl.archiprogram.localreview.vcs.ReviewBreakdown
  * hence the duplication trade-off.
  */
 class ReviewedChangesViewModifier(private val project: Project) : ChangesViewModifier {
-
     override fun modifyTreeModelBuilder(builder: ChangesViewModelBuilder) {
         if (project.isDisposed) return
         val breakdown = ReviewBreakdown.compute(project)
@@ -65,7 +64,6 @@ class ReviewedRootNode(
     private val viewedCount: Int,
     private val totalCount: Int,
 ) : ChangesBrowserNode<String>(LABEL) {
-
     init {
         markAsHelperNode()
     }
@@ -92,8 +90,7 @@ class ReviewedRootNode(
         )
     }
 
-    override fun getTextPresentation(): String =
-        "${LocalReviewBundle.message("grouping.reviewed.label")} $viewedCount of $totalCount"
+    override fun getTextPresentation(): String = "${LocalReviewBundle.message("grouping.reviewed.label")} $viewedCount of $totalCount"
 
     companion object {
         private const val LABEL = "localreview.reviewed"
@@ -101,7 +98,6 @@ class ReviewedRootNode(
 }
 
 class ToReviewRootNode(private val remaining: Int) : ChangesBrowserNode<String>(LABEL) {
-
     init {
         markAsHelperNode()
     }
@@ -120,8 +116,7 @@ class ToReviewRootNode(private val remaining: Int) : ChangesBrowserNode<String>(
         renderer.append("($remaining)", SimpleTextAttributes.GRAYED_ATTRIBUTES)
     }
 
-    override fun getTextPresentation(): String =
-        "${LocalReviewBundle.message("grouping.pending.label")} ($remaining)"
+    override fun getTextPresentation(): String = "${LocalReviewBundle.message("grouping.pending.label")} ($remaining)"
 
     companion object {
         private const val LABEL = "localreview.toreview"

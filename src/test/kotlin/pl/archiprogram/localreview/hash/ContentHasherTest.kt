@@ -8,28 +8,27 @@ import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
 class ContentHasherTest {
-
     private val hasher = ContentHasher()
 
-    @Test fun identicalContent_producesEqualDigests() {
+    @Test fun identicalContentProducesEqualDigests() {
         val bytes = "hello world".toByteArray()
         assertEquals(hasher.hashBytes(bytes), hasher.hashBytes(bytes))
     }
 
-    @Test fun singleByteFlip_producesDifferentDigest() {
+    @Test fun singleByteFlipProducesDifferentDigest() {
         val a = byteArrayOf(0, 1, 2, 3, 4)
         val b = byteArrayOf(0, 1, 2, 3, 5)
         assertNotEquals(hasher.hashBytes(a), hasher.hashBytes(b))
     }
 
-    @Test fun whitespaceSensitive_LFvsCRLFdiffer() {
+    @Test fun whitespaceSensitiveLFvsCRLFdiffer() {
         assertNotEquals(
             hasher.hashBytes("a\n".toByteArray()),
             hasher.hashBytes("a\r\n".toByteArray()),
         )
     }
 
-    @Test fun emptyInput_producesKnownSha256() {
+    @Test fun emptyInputProducesKnownSha256() {
         // SHA-256("") = e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
         assertEquals(
             "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
@@ -37,46 +36,47 @@ class ContentHasherTest {
         )
     }
 
-    @Test fun digestIsLowercaseHex_64chars() {
+    @Test fun digestIsLowercaseHex64chars() {
         val d = hasher.hashBytes("x".toByteArray())
         assertEquals(64, d.length)
         assertTrue("got: $d", d.all { it in '0'..'9' || it in 'a'..'f' })
     }
 
-    @Test fun fallbackHash_stable_whenLengthAndStampUnchanged() {
+    @Test fun fallbackHashStableWhenLengthAndStampUnchanged() {
         val a = hasher.fallbackHash(1_000_000L, 12345L)
         val b = hasher.fallbackHash(1_000_000L, 12345L)
         assertEquals(a, b)
     }
 
-    @Test fun fallbackHash_differs_whenStampChanges() {
+    @Test fun fallbackHashDiffersWhenStampChanges() {
         assertNotEquals(
             hasher.fallbackHash(1_000_000L, 12345L),
             hasher.fallbackHash(1_000_000L, 12346L),
         )
     }
 
-    @Test fun fallbackHash_differs_whenLengthChanges() {
+    @Test fun fallbackHashDiffersWhenLengthChanges() {
         assertNotEquals(
             hasher.fallbackHash(1_000_000L, 12345L),
             hasher.fallbackHash(1_000_001L, 12345L),
         )
     }
 
-    @Test fun binaryContent_hashedAsRawBytes() {
+    @Test fun binaryContentHashedAsRawBytes() {
         val a = byteArrayOf(0x00, 0x01.toByte(), 0xFF.toByte(), 0x80.toByte())
         val b = byteArrayOf(0x00, 0x01.toByte(), 0xFF.toByte(), 0x80.toByte())
         assertEquals(hasher.hashBytes(a), hasher.hashBytes(b))
     }
 
-    @Test fun threadLocalDigest_concurrentHashing_noCrossTalk() {
+    @Test fun threadLocalDigestConcurrentHashingNoCrossTalk() {
         val pool = Executors.newFixedThreadPool(16)
-        val tasks = (0 until 256).map { i ->
-            pool.submit<Pair<Int, String>> {
-                // Mix thread-local reuse with varying inputs
-                i to hasher.hashBytes("content-$i".toByteArray())
+        val tasks =
+            (0 until 256).map { i ->
+                pool.submit<Pair<Int, String>> {
+                    // Mix thread-local reuse with varying inputs
+                    i to hasher.hashBytes("content-$i".toByteArray())
+                }
             }
-        }
         val results = tasks.map { it.get(10, TimeUnit.SECONDS) }.toMap()
         // Each input should produce the same digest as a single-threaded recomputation
         for ((i, digest) in results) {
@@ -85,7 +85,7 @@ class ContentHasherTest {
         pool.shutdownNow()
     }
 
-    @Test fun threadLocalDigest_resetsBetweenCalls_sameResultAsSingleCall() {
+    @Test fun threadLocalDigestResetsBetweenCallsSameResultAsSingleCall() {
         val a = "first".toByteArray()
         val b = "second".toByteArray()
         val h1 = hasher.hashBytes(a)
@@ -95,7 +95,7 @@ class ContentHasherTest {
         assertEquals(h1, hasher.hashBytes(a))
     }
 
-    @Test fun sizeCap_constantIs10MiB() {
+    @Test fun sizeCapConstantIs10MiB() {
         assertEquals(10L * 1024 * 1024, ContentHasher.SIZE_CAP)
     }
 }

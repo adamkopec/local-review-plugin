@@ -23,7 +23,6 @@ import pl.archiprogram.localreview.state.Key
 import pl.archiprogram.localreview.state.ReviewStateService
 
 class ToggleViewedActionTest {
-
     private val action = ToggleViewedAction()
     private val project: Project = mockk(relaxed = true)
     private val service: ReviewStateService = mockk(relaxed = true)
@@ -40,11 +39,11 @@ class ToggleViewedActionTest {
         unmockkAll()
     }
 
-    @Test fun actionUpdateThread_isBgt() {
+    @Test fun actionUpdateThreadIsBgt() {
         assertEquals(ActionUpdateThread.BGT, action.getActionUpdateThread())
     }
 
-    @Test fun update_noProject_disablesAction() {
+    @Test fun updateNoProjectDisablesAction() {
         val presentation = Presentation()
         val event = eventWith(project = null, presentation = presentation)
 
@@ -53,7 +52,7 @@ class ToggleViewedActionTest {
         assertFalse(presentation.isEnabled)
     }
 
-    @Test fun update_emptyTargets_disablesWithNoSelectionDescription() {
+    @Test fun updateEmptyTargetsDisablesWithNoSelectionDescription() {
         val presentation = Presentation()
         val event = eventWith(project = project, presentation = presentation)
         every {
@@ -65,7 +64,7 @@ class ToggleViewedActionTest {
         assertFalse(presentation.isEnabled)
     }
 
-    @Test fun update_mergeConflictTarget_disablesAction() {
+    @Test fun updateMergeConflictTargetDisablesAction() {
         val presentation = Presentation()
         val event = eventWith(project = project, presentation = presentation)
         every {
@@ -77,7 +76,7 @@ class ToggleViewedActionTest {
         assertFalse(presentation.isEnabled)
     }
 
-    @Test fun update_allTargetsViewed_flipsTextToUnmark() {
+    @Test fun updateAllTargetsViewedFlipsTextToUnmark() {
         val key = Key("/r", "main", "/r/a.kt")
         val presentation = Presentation()
         val event = eventWith(project = project, presentation = presentation)
@@ -98,17 +97,18 @@ class ToggleViewedActionTest {
         )
     }
 
-    @Test fun update_someTargetsNotViewed_usesMarkText() {
+    @Test fun updateSomeTargetsNotViewedUsesMarkText() {
         val viewedKey = Key("/r", "main", "/r/a.kt")
         val unviewedKey = Key("/r", "main", "/r/b.kt")
         val presentation = Presentation()
         val event = eventWith(project = project, presentation = presentation)
         every {
             TargetCollector.collect(any(), any(), any(), any())
-        } returns listOf(
-            targetWithStatus(FileStatus.MODIFIED, viewedKey),
-            targetWithStatus(FileStatus.MODIFIED, unviewedKey),
-        )
+        } returns
+            listOf(
+                targetWithStatus(FileStatus.MODIFIED, viewedKey),
+                targetWithStatus(FileStatus.MODIFIED, unviewedKey),
+            )
         every { service.isViewed(viewedKey) } returns true
         every { service.isViewed(unviewedKey) } returns false
 
@@ -124,21 +124,28 @@ class ToggleViewedActionTest {
 
     // ----- helpers -----
 
-    private fun eventWith(project: Project?, presentation: Presentation): AnActionEvent =
+    private fun eventWith(
+        project: Project?,
+        presentation: Presentation,
+    ): AnActionEvent =
         mockk(relaxed = true) {
             every { this@mockk.project } returns project
             every { this@mockk.presentation } returns presentation
             every { getData(any<com.intellij.openapi.actionSystem.DataKey<Any?>>()) } returns null
         }
 
-    private fun targetWithStatus(status: FileStatus, key: Key = Key("/r", "m", "/r/x")): Target {
+    private fun targetWithStatus(
+        status: FileStatus,
+        key: Key = Key("/r", "m", "/r/x"),
+    ): Target {
         val fp = mockk<FilePath>(relaxed = true) { every { path } returns key.path }
         val rev = mockk<ContentRevision>(relaxed = true) { every { file } returns fp }
-        val change = mockk<Change>(relaxed = true) {
-            every { afterRevision } returns rev
-            every { beforeRevision } returns null
-            every { fileStatus } returns status
-        }
+        val change =
+            mockk<Change>(relaxed = true) {
+                every { afterRevision } returns rev
+                every { beforeRevision } returns null
+                every { fileStatus } returns status
+            }
         return Target.Changed(project, change, key)
     }
 }

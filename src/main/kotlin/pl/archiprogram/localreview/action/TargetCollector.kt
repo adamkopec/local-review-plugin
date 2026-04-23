@@ -15,7 +15,6 @@ import pl.archiprogram.localreview.vcs.KeyDeriver
  * without a live `AnActionEvent` / Swing wiring.
  */
 internal object TargetCollector {
-
     fun collect(
         project: Project,
         changes: Array<Change>?,
@@ -44,8 +43,12 @@ internal object TargetCollector {
             val filePath = VcsUtil.getFilePath(vf)
             val key = KeyDeriver.keyFor(project, filePath) ?: continue
             if (!seen.add(key)) continue
-            out += if (change != null) Target.Changed(project, change, key)
-                   else Target.Unversioned(project, filePath, key)
+            out +=
+                if (change != null) {
+                    Target.Changed(project, change, key)
+                } else {
+                    Target.Unversioned(project, filePath, key)
+                }
         }
 
         return out

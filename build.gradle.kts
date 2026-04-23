@@ -9,6 +9,7 @@ plugins {
     id("org.jetbrains.intellij.platform")
     id("org.jetbrains.kotlinx.kover") version "0.9.8"
     id("org.jetbrains.changelog")
+    id("org.jlleitschuh.gradle.ktlint")
 }
 
 group = providers.gradleProperty("pluginGroup").get()
@@ -51,28 +52,30 @@ intellijPlatform {
         name = providers.gradleProperty("pluginName")
         version = providers.gradleProperty("pluginVersion")
 
-        description = providers.fileContents(layout.projectDirectory.file("README.md")).asText.map {
-            val start = "<!-- Plugin description -->"
-            val end = "<!-- Plugin description end -->"
-            with(it.lines()) {
-                if (!containsAll(listOf(start, end))) {
-                    throw GradleException("Plugin description section not found in README.md:\n$start ... $end")
+        description =
+            providers.fileContents(layout.projectDirectory.file("README.md")).asText.map {
+                val start = "<!-- Plugin description -->"
+                val end = "<!-- Plugin description end -->"
+                with(it.lines()) {
+                    if (!containsAll(listOf(start, end))) {
+                        throw GradleException("Plugin description section not found in README.md:\n$start ... $end")
+                    }
+                    subList(indexOf(start) + 1, indexOf(end)).joinToString("\n").let(::markdownToHTML)
                 }
-                subList(indexOf(start) + 1, indexOf(end)).joinToString("\n").let(::markdownToHTML)
             }
-        }
 
         val changelog = project.changelog
-        changeNotes = providers.gradleProperty("pluginVersion").map { pluginVersion ->
-            with(changelog) {
-                renderItem(
-                    (getOrNull(pluginVersion) ?: getUnreleased())
-                        .withHeader(false)
-                        .withEmptySections(false),
-                    Changelog.OutputType.HTML,
-                )
+        changeNotes =
+            providers.gradleProperty("pluginVersion").map { pluginVersion ->
+                with(changelog) {
+                    renderItem(
+                        (getOrNull(pluginVersion) ?: getUnreleased())
+                            .withHeader(false)
+                            .withEmptySections(false),
+                        Changelog.OutputType.HTML,
+                    )
+                }
             }
-        }
 
         vendor {
             name = "Adam Kopeć"
@@ -90,9 +93,10 @@ intellijPlatform {
     publishing {
         token = providers.environmentVariable("PUBLISH_TOKEN")
         // Non-stable versions (e.g. 0.2.0-beta.1) publish to a matching channel.
-        channels = providers.gradleProperty("pluginVersion").map { version ->
-            listOf(version.substringAfter('-', "").substringBefore('.').ifEmpty { "default" })
-        }
+        channels =
+            providers.gradleProperty("pluginVersion").map { version ->
+                listOf(version.substringAfter('-', "").substringBefore('.').ifEmpty { "default" })
+            }
     }
 
     pluginVerification {
@@ -101,10 +105,18 @@ intellijPlatform {
             create(IntelliJPlatformType.PyCharmCommunity, "2025.2.3")
             create(IntelliJPlatformType.GoLand, "2025.2.3")
         }
-        failureLevel = listOf(
-            FailureLevel.COMPATIBILITY_PROBLEMS,
-            FailureLevel.INVALID_PLUGIN,
-        )
+        failureLevel =
+            listOf(
+                FailureLevel.COMPATIBILITY_PROBLEMS,
+                FailureLevel.INVALID_PLUGIN,
+                // Fail the build on platform-API deprecation. Catching these early avoids repeats
+                // of the ReadAction.compute/run cleanup — the JetBrains External Plugins Checker
+                // reports them as "Deprecated methods usages" and the local verifier now blocks on
+                // the same thing. Use @Suppress("DEPRECATION") at the call site for intentional
+                // short-term uses.
+                FailureLevel.DEPRECATED_API_USAGES,
+                FailureLevel.SCHEDULED_FOR_REMOVAL_API_USAGES,
+            )
     }
 }
 
@@ -117,16 +129,17 @@ changelog {
 intellijPlatformTesting {
     runIde.register("runIdeForUiTests") {
         task {
-            jvmArgumentProviders += CommandLineArgumentProvider {
-                listOf(
-                    "-Drobot-server.port=8082",
-                    "-Dide.mac.message.dialogs.as.sheets=false",
-                    "-Djb.privacy.policy.text=<!--999.999-->",
-                    "-Djb.consents.confirmation.enabled=false",
-                    "-Didea.trust.all.projects=true",
-                    "-Dide.show.tips.on.startup.default.value=false",
-                )
-            }
+            jvmArgumentProviders +=
+                CommandLineArgumentProvider {
+                    listOf(
+                        "-Drobot-server.port=8082",
+                        "-Dide.mac.message.dialogs.as.sheets=false",
+                        "-Djb.privacy.policy.text=<!--999.999-->",
+                        "-Djb.consents.confirmation.enabled=false",
+                        "-Didea.trust.all.projects=true",
+                        "-Dide.show.tips.on.startup.default.value=false",
+                    )
+                }
         }
         plugins {
             robotServerPlugin()

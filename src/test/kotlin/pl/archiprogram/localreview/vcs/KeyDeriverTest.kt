@@ -17,7 +17,6 @@ import org.junit.Test
 import pl.archiprogram.localreview.state.Key
 
 class KeyDeriverTest {
-
     private val project: Project = mockk(relaxed = true)
     private val vcsManager: ProjectLevelVcsManager = mockk()
     private val fakeProvider = ScriptedBranchProvider()
@@ -35,7 +34,7 @@ class KeyDeriverTest {
         unmockkAll()
     }
 
-    @Test fun keyFor_virtualFileUnderVcsRoot_returnsKeyWithRepoRootBranchPath() {
+    @Test fun keyForVirtualFileUnderVcsRootReturnsKeyWithRepoRootBranchPath() {
         val file = mockk<VirtualFile> { every { path } returns "/repo/src/Foo.kt" }
         val root = mockk<VirtualFile> { every { path } returns "/repo" }
         every { vcsManager.getVcsRootFor(file) } returns root
@@ -48,7 +47,7 @@ class KeyDeriverTest {
         assertEquals("/repo/src/Foo.kt", key.path)
     }
 
-    @Test fun keyFor_virtualFileOutsideVcs_returnsNoVcsSentinelKey() {
+    @Test fun keyForVirtualFileOutsideVcsReturnsNoVcsSentinelKey() {
         val file = mockk<VirtualFile> { every { path } returns "/tmp/loose.kt" }
         every { vcsManager.getVcsRootFor(file) } returns null
 
@@ -59,7 +58,7 @@ class KeyDeriverTest {
         assertEquals("/tmp/loose.kt", key.path)
     }
 
-    @Test fun keyFor_branchProviderThrows_branchFallsBackToNoBranch() {
+    @Test fun keyForBranchProviderThrowsBranchFallsBackToNoBranch() {
         val file = mockk<VirtualFile> { every { path } returns "/repo/a.kt" }
         val root = mockk<VirtualFile> { every { path } returns "/repo" }
         every { vcsManager.getVcsRootFor(file) } returns root
@@ -71,7 +70,7 @@ class KeyDeriverTest {
         assertEquals(Key.NO_BRANCH, key.branch)
     }
 
-    @Test fun keyFor_branchProviderReturnsDetached_keyCarriesDetachedSentinel() {
+    @Test fun keyForBranchProviderReturnsDetachedKeyCarriesDetachedSentinel() {
         val file = mockk<VirtualFile> { every { path } returns "/repo/a.kt" }
         val root = mockk<VirtualFile> { every { path } returns "/repo" }
         every { vcsManager.getVcsRootFor(file) } returns root
@@ -82,7 +81,7 @@ class KeyDeriverTest {
         assertEquals(Key.DETACHED, key.branch)
     }
 
-    @Test fun keyFor_filePathWithVirtualFile_delegatesToVirtualFileOverload() {
+    @Test fun keyForFilePathWithVirtualFileDelegatesToVirtualFileOverload() {
         val vf = mockk<VirtualFile> { every { path } returns "/repo/a.kt" }
         val filePath = mockk<FilePath> { every { virtualFile } returns vf }
         val root = mockk<VirtualFile> { every { path } returns "/repo" }
@@ -96,11 +95,12 @@ class KeyDeriverTest {
         assertEquals("main", key.branch)
     }
 
-    @Test fun keyFor_filePathWithoutVirtualFile_underVcs_usesFilePathValues() {
-        val filePath = mockk<FilePath> {
-            every { virtualFile } returns null
-            every { path } returns "/repo/deleted.kt"
-        }
+    @Test fun keyForFilePathWithoutVirtualFileUnderVcsUsesFilePathValues() {
+        val filePath =
+            mockk<FilePath> {
+                every { virtualFile } returns null
+                every { path } returns "/repo/deleted.kt"
+            }
         val root = mockk<VirtualFile> { every { path } returns "/repo" }
         every { vcsManager.getVcsRootFor(filePath) } returns root
         fakeProvider.branch = "feature"
@@ -112,11 +112,12 @@ class KeyDeriverTest {
         assertEquals("/repo/deleted.kt", key.path)
     }
 
-    @Test fun keyFor_filePathWithoutVirtualFile_outsideVcs_returnsNull() {
-        val filePath = mockk<FilePath> {
-            every { virtualFile } returns null
-            every { path } returns "/tmp/loose.kt"
-        }
+    @Test fun keyForFilePathWithoutVirtualFileOutsideVcsReturnsNull() {
+        val filePath =
+            mockk<FilePath> {
+                every { virtualFile } returns null
+                every { path } returns "/tmp/loose.kt"
+            }
         every { vcsManager.getVcsRootFor(filePath) } returns null
 
         val key = KeyDeriver.keyFor(project, filePath)
@@ -124,11 +125,12 @@ class KeyDeriverTest {
         assertNull(key)
     }
 
-    @Test fun keyFor_filePath_branchProviderThrows_branchFallsBackToNoBranch() {
-        val filePath = mockk<FilePath> {
-            every { virtualFile } returns null
-            every { path } returns "/repo/deleted.kt"
-        }
+    @Test fun keyForFilePathBranchProviderThrowsBranchFallsBackToNoBranch() {
+        val filePath =
+            mockk<FilePath> {
+                every { virtualFile } returns null
+                every { path } returns "/repo/deleted.kt"
+            }
         val root = mockk<VirtualFile> { every { path } returns "/repo" }
         every { vcsManager.getVcsRootFor(filePath) } returns root
         fakeProvider.throwOnCall = true
@@ -143,7 +145,10 @@ private class ScriptedBranchProvider : BranchProvider {
     var branch: String = Key.NO_BRANCH
     var throwOnCall: Boolean = false
 
-    override fun currentBranch(project: Project, repoRoot: VirtualFile): String {
+    override fun currentBranch(
+        project: Project,
+        repoRoot: VirtualFile,
+    ): String {
         if (throwOnCall) throw IllegalStateException("scripted")
         return branch
     }

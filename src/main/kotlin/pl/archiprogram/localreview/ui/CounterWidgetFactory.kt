@@ -7,6 +7,7 @@ import pl.archiprogram.localreview.LocalReviewBundle
 
 class CounterWidgetFactory : StatusBarWidgetFactory {
     override fun getId(): String = WIDGET_ID
+
     override fun getDisplayName(): String = LocalReviewBundle.message("widget.counter.name")
 
     // Gating on ProjectLevelVcsManager.hasActiveVcss() races with StatusBarWidgetsManager init:

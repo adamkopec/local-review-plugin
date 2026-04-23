@@ -33,7 +33,6 @@ import kotlin.reflect.full.isSubclassOf
  * wrapper's declarative + gate behavior.
  */
 class LocalReviewToolsetTest {
-
     private val settings: LocalReviewSettings = mockk(relaxed = true)
 
     @Before
@@ -47,17 +46,18 @@ class LocalReviewToolsetTest {
         unmockkAll()
     }
 
-    @Test fun class_implements_McpToolset() {
+    @Test fun classImplementsMcpToolset() {
         assertTrue(
             "LocalReviewToolset must implement McpToolset so ReflectionToolsProvider picks it up.",
             LocalReviewToolset::class.isSubclassOf(McpToolset::class),
         )
     }
 
-    @Test fun declares_exactly_the_five_expected_tool_names() {
-        val names = toolAnnotatedFunctions(LocalReviewToolset::class).mapNotNull {
-            it.findAnnotation<McpTool>()?.name
-        }.toSet()
+    @Test fun declaresExactlyTheFiveExpectedToolNames() {
+        val names =
+            toolAnnotatedFunctions(LocalReviewToolset::class).mapNotNull {
+                it.findAnnotation<McpTool>()?.name
+            }.toSet()
 
         assertEquals(
             "Tool name set is part of the user-prompt contract; changes must be deliberate.",
@@ -72,14 +72,15 @@ class LocalReviewToolsetTest {
         )
     }
 
-    @Test fun every_tool_has_a_non_empty_description() {
-        val missing = toolAnnotatedFunctions(LocalReviewToolset::class).filter {
-            it.findAnnotation<McpDescription>()?.description.isNullOrBlank()
-        }
+    @Test fun everyToolHasANonEmptyDescription() {
+        val missing =
+            toolAnnotatedFunctions(LocalReviewToolset::class).filter {
+                it.findAnnotation<McpDescription>()?.description.isNullOrBlank()
+            }
         assertTrue("Missing @McpDescription on: ${missing.map { it.name }}", missing.isEmpty())
     }
 
-    @Test fun every_tool_is_a_suspend_function() {
+    @Test fun everyToolIsASuspendFunction() {
         val nonSuspend = toolAnnotatedFunctions(LocalReviewToolset::class).filterNot { it.isSuspend }
         assertTrue(
             "Reflection-scanned MCP tools must be suspend fun. Non-suspend: ${nonSuspend.map { it.name }}",
@@ -91,52 +92,57 @@ class LocalReviewToolsetTest {
     // Gate: every tool entry point refuses when the setting is off
     // ---------------------------------------------------------------------
 
-    @Test fun list_changes_throws_when_disabled() {
+    @Test fun listChangesThrowsWhenDisabled() {
         gateOff()
         val toolset = LocalReviewToolset()
-        val ex = assertThrows(IllegalStateException::class.java) {
-            runBlocking { toolset.local_review_list_changes() }
-        }
+        val ex =
+            assertThrows(IllegalStateException::class.java) {
+                runBlocking { toolset.local_review_list_changes() }
+            }
         assertTrue(ex.message.orEmpty().contains("disabled", ignoreCase = true))
     }
 
-    @Test fun mark_all_viewed_throws_when_disabled() {
+    @Test fun markAllViewedThrowsWhenDisabled() {
         gateOff()
         val toolset = LocalReviewToolset()
-        val ex = assertThrows(IllegalStateException::class.java) {
-            runBlocking { toolset.local_review_mark_all_viewed() }
-        }
+        val ex =
+            assertThrows(IllegalStateException::class.java) {
+                runBlocking { toolset.local_review_mark_all_viewed() }
+            }
         assertTrue(ex.message.orEmpty().contains("disabled", ignoreCase = true))
     }
 
-    @Test fun unmark_all_throws_when_disabled() {
+    @Test fun unmarkAllThrowsWhenDisabled() {
         gateOff()
         val toolset = LocalReviewToolset()
-        val ex = assertThrows(IllegalStateException::class.java) {
-            runBlocking { toolset.local_review_unmark_all() }
-        }
+        val ex =
+            assertThrows(IllegalStateException::class.java) {
+                runBlocking { toolset.local_review_unmark_all() }
+            }
         assertTrue(ex.message.orEmpty().contains("disabled", ignoreCase = true))
     }
 
-    @Test fun mark_files_throws_when_disabled() {
+    @Test fun markFilesThrowsWhenDisabled() {
         gateOff()
         val toolset = LocalReviewToolset()
-        val ex = assertThrows(IllegalStateException::class.java) {
-            runBlocking { toolset.local_review_mark_files(listOf("/x")) }
-        }
+        val ex =
+            assertThrows(IllegalStateException::class.java) {
+                runBlocking { toolset.local_review_mark_files(listOf("/x")) }
+            }
         assertTrue(ex.message.orEmpty().contains("disabled", ignoreCase = true))
     }
 
-    @Test fun unmark_files_throws_when_disabled() {
+    @Test fun unmarkFilesThrowsWhenDisabled() {
         gateOff()
         val toolset = LocalReviewToolset()
-        val ex = assertThrows(IllegalStateException::class.java) {
-            runBlocking { toolset.local_review_unmark_files(listOf("/x")) }
-        }
+        val ex =
+            assertThrows(IllegalStateException::class.java) {
+                runBlocking { toolset.local_review_unmark_files(listOf("/x")) }
+            }
         assertTrue(ex.message.orEmpty().contains("disabled", ignoreCase = true))
     }
 
-    @Test fun no_tool_permitted_helper_throws_with_disabled_message() {
+    @Test fun noToolPermittedHelperThrowsWithDisabledMessage() {
         val ex = assertThrows(IllegalStateException::class.java) { noToolPermitted() }
         assertNotNull(ex.message)
         assertTrue(ex.message!!.contains("disabled", ignoreCase = true))

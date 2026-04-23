@@ -24,8 +24,7 @@ import pl.archiprogram.localreview.state.ReviewStateService
 internal const val DISABLED_MESSAGE =
     "Local Review MCP tools are disabled in plugin settings. Enable them under Settings → Tools → Local Review."
 
-internal fun mcpToolsEnabled(): Boolean =
-    LocalReviewSettings.getInstance().current().enableMcpTools
+internal fun mcpToolsEnabled(): Boolean = LocalReviewSettings.getInstance().current().enableMcpTools
 
 internal data class ChangeEntry(
     val path: String,
@@ -87,33 +86,36 @@ internal fun markFiles(
     clm: ChangeListManager = ChangeListManager.getInstance(project),
 ): List<PathResult> {
     if (project.isDisposed) return paths.map { PathResult(it, "project_disposed") }
-    val currentByKey: Map<Key, Change> = clm.allChanges
-        .mapNotNull { c -> c.key(project)?.let { it to c } }
-        .toMap()
+    val currentByKey: Map<Key, Change> =
+        clm.allChanges
+            .mapNotNull { c -> c.key(project)?.let { it to c } }
+            .toMap()
     return paths.map { path ->
-        val result = when (val outcome = PathResolver.resolve(project, path)) {
-            is PathResolver.Outcome.BlankPath -> "blank_path"
-            is PathResolver.Outcome.NotFound -> "not_found"
-            is PathResolver.Outcome.IsDirectory -> "is_directory"
-            is PathResolver.Outcome.OutsideVcs -> "outside_vcs"
-            is PathResolver.Outcome.Resolved -> {
-                val change = currentByKey[outcome.key]
-                when {
-                    change == null -> "not_a_current_change"
-                    service.isViewed(outcome.key) -> "already_viewed"
-                    else -> {
-                        val hash = change.hashAfter()
-                            ?: ContentHasher.getInstance().hash(outcome.file)
-                        if (hash == null) {
-                            "hash_unavailable"
-                        } else {
-                            service.mark(outcome.key, hash, System.currentTimeMillis())
-                            "marked"
+        val result =
+            when (val outcome = PathResolver.resolve(project, path)) {
+                is PathResolver.Outcome.BlankPath -> "blank_path"
+                is PathResolver.Outcome.NotFound -> "not_found"
+                is PathResolver.Outcome.IsDirectory -> "is_directory"
+                is PathResolver.Outcome.OutsideVcs -> "outside_vcs"
+                is PathResolver.Outcome.Resolved -> {
+                    val change = currentByKey[outcome.key]
+                    when {
+                        change == null -> "not_a_current_change"
+                        service.isViewed(outcome.key) -> "already_viewed"
+                        else -> {
+                            val hash =
+                                change.hashAfter()
+                                    ?: ContentHasher.getInstance().hash(outcome.file)
+                            if (hash == null) {
+                                "hash_unavailable"
+                            } else {
+                                service.mark(outcome.key, hash, System.currentTimeMillis())
+                                "marked"
+                            }
                         }
                     }
                 }
             }
-        }
         PathResult(path, result)
     }
 }
@@ -125,28 +127,30 @@ internal fun unmarkFiles(
 ): List<PathResult> {
     if (project.isDisposed) return paths.map { PathResult(it, "project_disposed") }
     return paths.map { path ->
-        val result = when (val outcome = PathResolver.resolve(project, path)) {
-            is PathResolver.Outcome.BlankPath -> "blank_path"
-            is PathResolver.Outcome.NotFound -> "not_found"
-            is PathResolver.Outcome.IsDirectory -> "is_directory"
-            is PathResolver.Outcome.OutsideVcs -> "outside_vcs"
-            is PathResolver.Outcome.Resolved ->
-                if (service.unmark(outcome.key)) "unmarked" else "not_viewed"
-        }
+        val result =
+            when (val outcome = PathResolver.resolve(project, path)) {
+                is PathResolver.Outcome.BlankPath -> "blank_path"
+                is PathResolver.Outcome.NotFound -> "not_found"
+                is PathResolver.Outcome.IsDirectory -> "is_directory"
+                is PathResolver.Outcome.OutsideVcs -> "outside_vcs"
+                is PathResolver.Outcome.Resolved ->
+                    if (service.unmark(outcome.key)) "unmarked" else "not_viewed"
+            }
         PathResult(path, result)
     }
 }
 
-internal fun statusName(status: FileStatus): String = when (status) {
-    FileStatus.MODIFIED -> "MODIFIED"
-    FileStatus.ADDED -> "NEW"
-    FileStatus.DELETED -> "DELETED"
-    FileStatus.MERGED_WITH_CONFLICTS -> "MERGED_WITH_CONFLICTS"
-    FileStatus.NOT_CHANGED -> "NOT_CHANGED"
-    FileStatus.OBSOLETE -> "OBSOLETE"
-    FileStatus.UNKNOWN -> "UNKNOWN"
-    else -> status.text ?: "OTHER"
-}
+internal fun statusName(status: FileStatus): String =
+    when (status) {
+        FileStatus.MODIFIED -> "MODIFIED"
+        FileStatus.ADDED -> "NEW"
+        FileStatus.DELETED -> "DELETED"
+        FileStatus.MERGED_WITH_CONFLICTS -> "MERGED_WITH_CONFLICTS"
+        FileStatus.NOT_CHANGED -> "NOT_CHANGED"
+        FileStatus.OBSOLETE -> "OBSOLETE"
+        FileStatus.UNKNOWN -> "UNKNOWN"
+        else -> status.text ?: "OTHER"
+    }
 
 internal fun changeEntriesToJson(entries: List<ChangeEntry>): String =
     entries.joinToString(prefix = "[", postfix = "]") { e ->
@@ -163,7 +167,10 @@ private fun jsonString(s: String): String {
     sb.append('"')
     for (c in s) {
         when (c) {
-            '\\', '"' -> { sb.append('\\'); sb.append(c) }
+            '\\', '"' -> {
+                sb.append('\\')
+                sb.append(c)
+            }
             '\n' -> sb.append("\\n")
             '\r' -> sb.append("\\r")
             '\t' -> sb.append("\\t")

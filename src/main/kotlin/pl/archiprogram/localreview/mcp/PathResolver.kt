@@ -25,16 +25,22 @@ import java.io.File
  * must intersect with `ChangeListManager.getInstance(project).allChanges` themselves.
  */
 object PathResolver {
-
     sealed class Outcome {
         data class Resolved(val file: VirtualFile, val key: Key) : Outcome()
+
         object NotFound : Outcome()
+
         object IsDirectory : Outcome()
+
         object BlankPath : Outcome()
+
         object OutsideVcs : Outcome()
     }
 
-    fun resolve(project: Project, path: String): Outcome {
+    fun resolve(
+        project: Project,
+        path: String,
+    ): Outcome {
         if (path.isBlank()) return Outcome.BlankPath
 
         val file = findFile(project, path) ?: return Outcome.NotFound
@@ -45,20 +51,27 @@ object PathResolver {
         return Outcome.Resolved(file, key)
     }
 
-    private fun findFile(project: Project, path: String): VirtualFile? {
+    private fun findFile(
+        project: Project,
+        path: String,
+    ): VirtualFile? {
         val lfs = LocalFileSystem.getInstance()
         val asFile = File(path)
-        val absolute = if (asFile.isAbsolute) asFile else {
-            val base = project.basePath ?: return null
-            File(base, path)
-        }
+        val absolute =
+            if (asFile.isAbsolute) {
+                asFile
+            } else {
+                val base = project.basePath ?: return null
+                File(base, path)
+            }
         // Canonicalize to handle mixed case on case-insensitive filesystems (macOS, Windows)
         // and symlinks, so the derived Key matches what ChangeListManager reports.
-        val canonical = try {
-            absolute.canonicalFile
-        } catch (_: Throwable) {
-            absolute.absoluteFile
-        }
+        val canonical =
+            try {
+                absolute.canonicalFile
+            } catch (_: Throwable) {
+                absolute.absoluteFile
+            }
         return lfs.findFileByIoFile(canonical)
     }
 }

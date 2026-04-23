@@ -33,5 +33,6 @@ class EntryDto {
     }
 
     fun toKey(): Key = Key(repoRoot, branch, path)
+
     fun toEntry(): ReviewEntry = ReviewEntry(hashHex, markedAt)
 }

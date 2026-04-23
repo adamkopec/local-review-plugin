@@ -15,8 +15,10 @@ import pl.archiprogram.localreview.state.Key
  * different scopes. Keeping it simple and direct avoids that class of bug entirely.
  */
 class DefaultBranchProvider : BranchProvider {
-
-    override fun currentBranch(project: Project, repoRoot: VirtualFile): String {
+    override fun currentBranch(
+        project: Project,
+        repoRoot: VirtualFile,
+    ): String {
         if (project.isDisposed) return Key.NO_BRANCH
         return try {
             val mgr = git4idea.repo.GitRepositoryManager.getInstance(project)

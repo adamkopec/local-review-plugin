@@ -11,11 +11,8 @@ import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.changes.Change
-import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.AppExecutorUtil
-import com.intellij.vcsUtil.VcsUtil
 import pl.archiprogram.localreview.Icons
 import pl.archiprogram.localreview.LocalReviewBundle
 import pl.archiprogram.localreview.hash.ContentHasher
@@ -25,7 +22,6 @@ import pl.archiprogram.localreview.ui.SafeRefresh
 import pl.archiprogram.localreview.vcs.KeyDeriver
 
 class ToggleViewedAction : AnAction() {
-
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
     override fun update(e: AnActionEvent) {
@@ -56,9 +52,10 @@ class ToggleViewedAction : AnAction() {
         val allViewed = viewedCount == targets.size
 
         presentation.isEnabled = true
-        presentation.text = LocalReviewBundle.message(
-            if (allViewed) "action.toggleViewed.text.unmark" else "action.toggleViewed.text",
-        )
+        presentation.text =
+            LocalReviewBundle.message(
+                if (allViewed) "action.toggleViewed.text.unmark" else "action.toggleViewed.text",
+            )
         presentation.description = LocalReviewBundle.message("action.toggleViewed.description")
         presentation.icon = if (allViewed) Icons.VIEWED else Icons.UNVIEWED
     }
@@ -80,9 +77,10 @@ class ToggleViewedAction : AnAction() {
                 try {
                     for (t in targets) {
                         if (service.isViewed(t.key)) continue
-                        val hash = runReadAction {
-                            if (project.isDisposed) null else t.hash()
-                        } ?: continue
+                        val hash =
+                            runReadAction {
+                                if (project.isDisposed) null else t.hash()
+                            } ?: continue
                         service.mark(t.key, hash)
                     }
                 } finally {
@@ -93,16 +91,20 @@ class ToggleViewedAction : AnAction() {
         }
     }
 
-    private fun collectTargets(e: AnActionEvent, project: Project?): List<Target> {
+    private fun collectTargets(
+        e: AnActionEvent,
+        project: Project?,
+    ): List<Target> {
         if (project == null) return emptyList()
         return TargetCollector.collect(
             project = project,
             changes = e.getData(VcsDataKeys.CHANGES),
             unversionedPaths = e.getData(ChangesListView.UNVERSIONED_FILE_PATHS_DATA_KEY),
-            candidateFiles = buildList {
-                e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)?.let { addAll(it) }
-                e.getData(CommonDataKeys.VIRTUAL_FILE)?.let { add(it) }
-            },
+            candidateFiles =
+                buildList {
+                    e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)?.let { addAll(it) }
+                    e.getData(CommonDataKeys.VIRTUAL_FILE)?.let { add(it) }
+                },
         )
     }
 }
@@ -110,15 +112,18 @@ class ToggleViewedAction : AnAction() {
 internal sealed class Target {
     abstract val key: Key
     abstract val fileStatus: FileStatus
+
     abstract fun hash(): String?
 
     class Changed(private val project: Project, private val change: Change, override val key: Key) : Target() {
         override val fileStatus: FileStatus get() = change.fileStatus
+
         override fun hash(): String? = change.hashAfter()
     }
 
     class Unversioned(private val project: Project, private val filePath: FilePath, override val key: Key) : Target() {
         override val fileStatus: FileStatus = FileStatus.UNKNOWN
+
         override fun hash(): String? {
             val vf = filePath.virtualFile ?: return null
             return ContentHasher.getInstance().hash(vf)

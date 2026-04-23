@@ -34,7 +34,6 @@ import pl.archiprogram.localreview.state.ReviewState
  * class so Change mocks report known Keys/hashes.
  */
 class LocalReviewMcpLogicTest {
-
     private val project: Project = mockk(relaxed = true)
     private val state = FakeReviewState()
     private val settings: LocalReviewSettings = mockk(relaxed = true)
@@ -60,7 +59,7 @@ class LocalReviewMcpLogicTest {
     // Gate
     // ---------------------------------------------------------------------
 
-    @Test fun mcp_tools_enabled_reads_the_setting() {
+    @Test fun mcpToolsEnabledReadsTheSetting() {
         every { settings.current() } returns LocalReviewSettings.State(enableMcpTools = false)
         assertEquals(false, mcpToolsEnabled())
 
@@ -72,7 +71,7 @@ class LocalReviewMcpLogicTest {
     // listChanges
     // ---------------------------------------------------------------------
 
-    @Test fun listChanges_returns_entries_with_viewed_flags_and_status_labels() {
+    @Test fun listChangesReturnsEntriesWithViewedFlagsAndStatusLabels() {
         val k1 = Key("/r", "main", "/r/a.kt")
         val k2 = Key("/r", "main", "/r/b.kt")
         val c1 = change(k1, FileStatus.MODIFIED)
@@ -91,17 +90,18 @@ class LocalReviewMcpLogicTest {
         )
     }
 
-    @Test fun listChanges_returns_empty_for_disposed_project() {
+    @Test fun listChangesReturnsEmptyForDisposedProject() {
         every { project.isDisposed } returns true
         assertEquals(emptyList<ChangeEntry>(), listChanges(project, state, clm))
     }
 
-    @Test fun listChanges_skips_changes_without_derivable_key() {
+    @Test fun listChangesSkipsChangesWithoutDerivableKey() {
         val k1 = Key("/r", "main", "/r/a.kt")
         val c1 = change(k1, FileStatus.MODIFIED)
-        val orphan = mockk<Change>(relaxed = true) {
-            every { fileStatus } returns FileStatus.MODIFIED
-        }
+        val orphan =
+            mockk<Change>(relaxed = true) {
+                every { fileStatus } returns FileStatus.MODIFIED
+            }
         every { orphan.key(project) } returns null
         every { clm.allChanges } returns listOf(c1, orphan)
 
@@ -113,7 +113,7 @@ class LocalReviewMcpLogicTest {
     // markAllViewed
     // ---------------------------------------------------------------------
 
-    @Test fun markAllViewed_marks_only_unviewed_files_and_returns_count() {
+    @Test fun markAllViewedMarksOnlyUnviewedFilesAndReturnsCount() {
         val k1 = Key("/r", "main", "/r/a.kt")
         val k2 = Key("/r", "main", "/r/b.kt")
         val k3 = Key("/r", "main", "/r/c.kt")
@@ -132,7 +132,7 @@ class LocalReviewMcpLogicTest {
         )
     }
 
-    @Test fun markAllViewed_skips_merge_conflict_files() {
+    @Test fun markAllViewedSkipsMergeConflictFiles() {
         val k1 = Key("/r", "main", "/r/a.kt")
         val c1 = change(k1, FileStatus.MERGED_WITH_CONFLICTS, hash = "h1")
         every { clm.allChanges } returns listOf(c1)
@@ -141,7 +141,7 @@ class LocalReviewMcpLogicTest {
         assertEquals(emptyList<Pair<Key, String>>(), state.marks.map { it.first to it.second })
     }
 
-    @Test fun markAllViewed_skips_changes_whose_hash_cant_be_computed() {
+    @Test fun markAllViewedSkipsChangesWhoseHashCantBeComputed() {
         val k1 = Key("/r", "main", "/r/a.kt")
         val c1 = change(k1, FileStatus.MODIFIED, hash = null)
         every { clm.allChanges } returns listOf(c1)
@@ -150,7 +150,7 @@ class LocalReviewMcpLogicTest {
         assertEquals(emptyList<Pair<Key, String>>(), state.marks.map { it.first to it.second })
     }
 
-    @Test fun markAllViewed_marks_deleted_files_with_the_deletion_sentinel() {
+    @Test fun markAllViewedMarksDeletedFilesWithTheDeletionSentinel() {
         // Regression: deletions have no afterRevision, so hashAfter returns DELETED_HASH
         // (a sentinel) rather than null — without this, bulk-mark silently skipped deletes.
         val k1 = Key("/r", "main", "/r/gone.kt")
@@ -164,7 +164,7 @@ class LocalReviewMcpLogicTest {
         )
     }
 
-    @Test fun markAllViewed_returns_zero_for_disposed_project() {
+    @Test fun markAllViewedReturnsZeroForDisposedProject() {
         every { project.isDisposed } returns true
         assertEquals(0, markAllViewed(project, state, clm))
     }
@@ -173,13 +173,13 @@ class LocalReviewMcpLogicTest {
     // unmarkAll
     // ---------------------------------------------------------------------
 
-    @Test fun unmarkAll_delegates_to_clearAll_and_returns_count() {
+    @Test fun unmarkAllDelegatesToClearAllAndReturnsCount() {
         state.clearAllReturn = 7
         assertEquals(7, unmarkAll(project, state))
         assertEquals(1, state.clearAllCount)
     }
 
-    @Test fun unmarkAll_returns_zero_for_disposed_project() {
+    @Test fun unmarkAllReturnsZeroForDisposedProject() {
         every { project.isDisposed } returns true
         assertEquals(0, unmarkAll(project, state))
         assertEquals(0, state.clearAllCount)
@@ -189,7 +189,7 @@ class LocalReviewMcpLogicTest {
     // markFiles
     // ---------------------------------------------------------------------
 
-    @Test fun markFiles_marks_file_in_current_changeset() {
+    @Test fun markFilesMarksFileInCurrentChangeset() {
         val key = Key("/r", "main", "/r/a.kt")
         val vf = mockk<VirtualFile>(relaxed = true)
         val c = change(key, FileStatus.MODIFIED, hash = "deadbeef")
@@ -203,7 +203,7 @@ class LocalReviewMcpLogicTest {
         assertEquals(listOf(key to "deadbeef"), state.marks.map { it.first to it.second })
     }
 
-    @Test fun markFiles_reports_already_viewed_without_remarking() {
+    @Test fun markFilesReportsAlreadyViewedWithoutRemarking() {
         val key = Key("/r", "main", "/r/a.kt")
         val vf = mockk<VirtualFile>(relaxed = true)
         val c = change(key, FileStatus.MODIFIED, hash = "deadbeef")
@@ -219,7 +219,7 @@ class LocalReviewMcpLogicTest {
         assertEquals(emptyList<Pair<Key, String>>(), state.marks.map { it.first to it.second })
     }
 
-    @Test fun markFiles_reports_not_a_current_change_when_resolved_but_not_in_changeset() {
+    @Test fun markFilesReportsNotACurrentChangeWhenResolvedButNotInChangeset() {
         val key = Key("/r", "main", "/r/a.kt")
         val vf = mockk<VirtualFile>(relaxed = true)
         every { clm.allChanges } returns emptyList()
@@ -233,7 +233,7 @@ class LocalReviewMcpLogicTest {
         assertEquals(emptyList<Pair<Key, String>>(), state.marks.map { it.first to it.second })
     }
 
-    @Test fun markFiles_propagates_path_resolver_failure_outcomes() {
+    @Test fun markFilesPropagatesPathResolverFailureOutcomes() {
         every { clm.allChanges } returns emptyList()
         every { PathResolver.resolve(project, "") } returns PathResolver.Outcome.BlankPath
         every { PathResolver.resolve(project, "/gone.kt") } returns PathResolver.Outcome.NotFound
@@ -254,7 +254,7 @@ class LocalReviewMcpLogicTest {
         assertEquals(emptyList<Pair<Key, String>>(), state.marks.map { it.first to it.second })
     }
 
-    @Test fun markFiles_disposed_project_reports_project_disposed_per_path() {
+    @Test fun markFilesDisposedProjectReportsProjectDisposedPerPath() {
         every { project.isDisposed } returns true
         val out = markFiles(project, listOf("/r/a.kt", "/r/b.kt"), state, clm)
         assertEquals(
@@ -270,7 +270,7 @@ class LocalReviewMcpLogicTest {
     // unmarkFiles
     // ---------------------------------------------------------------------
 
-    @Test fun unmarkFiles_unmarks_viewed_file() {
+    @Test fun unmarkFilesUnmarksViewedFile() {
         val key = Key("/r", "main", "/r/a.kt")
         val vf = mockk<VirtualFile>(relaxed = true)
         every { PathResolver.resolve(project, "/r/a.kt") } returns
@@ -284,7 +284,7 @@ class LocalReviewMcpLogicTest {
         assertEquals(listOf(key), state.unmarks)
     }
 
-    @Test fun unmarkFiles_reports_not_viewed_when_key_had_no_mark() {
+    @Test fun unmarkFilesReportsNotViewedWhenKeyHadNoMark() {
         val key = Key("/r", "main", "/r/a.kt")
         val vf = mockk<VirtualFile>(relaxed = true)
         every { PathResolver.resolve(project, "/r/a.kt") } returns
@@ -297,7 +297,7 @@ class LocalReviewMcpLogicTest {
         )
     }
 
-    @Test fun unmarkFiles_allows_unmarking_files_no_longer_in_current_changeset() {
+    @Test fun unmarkFilesAllowsUnmarkingFilesNoLongerInCurrentChangeset() {
         val key = Key("/r", "main", "/r/gone.kt")
         val vf = mockk<VirtualFile>(relaxed = true)
         every { PathResolver.resolve(project, "/r/gone.kt") } returns
@@ -309,7 +309,7 @@ class LocalReviewMcpLogicTest {
         assertEquals(listOf(key), state.unmarks)
     }
 
-    @Test fun unmarkFiles_propagates_path_resolver_failure_outcomes() {
+    @Test fun unmarkFilesPropagatesPathResolverFailureOutcomes() {
         every { PathResolver.resolve(project, "/gone.kt") } returns PathResolver.Outcome.NotFound
         every { PathResolver.resolve(project, "/dir") } returns PathResolver.Outcome.IsDirectory
 
@@ -327,14 +327,19 @@ class LocalReviewMcpLogicTest {
     // Helpers
     // ---------------------------------------------------------------------
 
-    private fun change(key: Key, status: FileStatus, hash: String? = null): Change {
+    private fun change(
+        key: Key,
+        status: FileStatus,
+        hash: String? = null,
+    ): Change {
         val fp = mockk<FilePath>(relaxed = true) { every { path } returns key.path }
         val rev = mockk<ContentRevision>(relaxed = true) { every { file } returns fp }
-        val c = mockk<Change>(relaxed = true) {
-            every { afterRevision } returns rev
-            every { beforeRevision } returns null
-            every { fileStatus } returns status
-        }
+        val c =
+            mockk<Change>(relaxed = true) {
+                every { afterRevision } returns rev
+                every { beforeRevision } returns null
+                every { fileStatus } returns status
+            }
         every { c.key(project) } returns key
         every { c.hashAfter() } returns hash
         return c
@@ -354,7 +359,11 @@ class LocalReviewMcpLogicTest {
 
         override fun isViewed(key: Key): Boolean = key in viewed
 
-        override fun mark(key: Key, hashHex: String, now: Long) {
+        override fun mark(
+            key: Key,
+            hashHex: String,
+            now: Long,
+        ) {
             marks.add(Triple(key, hashHex, now))
             viewed += key
         }

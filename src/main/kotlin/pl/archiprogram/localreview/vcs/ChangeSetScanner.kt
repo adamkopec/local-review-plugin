@@ -22,7 +22,6 @@ import pl.archiprogram.localreview.state.Key
  * design while the user resolves the conflict.
  */
 internal object ChangeSetScanner {
-
     data class Result(
         val currentChanges: Set<Key>,
         val renames: Map<Key, Key>,

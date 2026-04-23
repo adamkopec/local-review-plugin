@@ -13,7 +13,6 @@ import pl.archiprogram.localreview.vcs.BranchProvider
 import pl.archiprogram.localreview.vcs.ReviewBreakdown
 
 class CounterWidget(private val project: Project) : StatusBarWidget, StatusBarWidget.TextPresentation {
-
     private var statusBar: StatusBar? = null
     private var connection: MessageBusConnection? = null
 
@@ -22,12 +21,18 @@ class CounterWidget(private val project: Project) : StatusBarWidget, StatusBarWi
     override fun install(statusBar: StatusBar) {
         this.statusBar = statusBar
         val conn = project.messageBus.connect(this)
-        conn.subscribe(ReviewStateService.TOPIC, object : ReviewStateService.Listener {
-            override fun stateChanged() = repaint()
-        })
-        conn.subscribe(ChangeListListener.TOPIC, object : ChangeListListener {
-            override fun changeListUpdateDone() = repaint()
-        })
+        conn.subscribe(
+            ReviewStateService.TOPIC,
+            object : ReviewStateService.Listener {
+                override fun stateChanged() = repaint()
+            },
+        )
+        conn.subscribe(
+            ChangeListListener.TOPIC,
+            object : ChangeListListener {
+                override fun changeListUpdateDone() = repaint()
+            },
+        )
         connection = conn
         repaint()
     }

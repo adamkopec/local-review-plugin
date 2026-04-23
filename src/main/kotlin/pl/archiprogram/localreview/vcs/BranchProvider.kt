@@ -10,10 +10,12 @@ import com.intellij.openapi.vfs.VirtualFile
  * The Git fragment registers an override that talks to Git4Idea.
  */
 interface BranchProvider {
-    fun currentBranch(project: Project, repoRoot: VirtualFile): String
+    fun currentBranch(
+        project: Project,
+        repoRoot: VirtualFile,
+    ): String
 
     companion object {
-        fun getInstance(): BranchProvider =
-            ApplicationManager.getApplication().service()
+        fun getInstance(): BranchProvider = ApplicationManager.getApplication().service()
     }
 }

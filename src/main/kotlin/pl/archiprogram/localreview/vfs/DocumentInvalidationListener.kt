@@ -21,7 +21,6 @@ import java.util.concurrent.atomic.AtomicBoolean
  * locked-in decision that "mark doesn't resurrect on revert."
  */
 class DocumentInvalidationListener : DocumentListener {
-
     override fun documentChanged(event: DocumentEvent) {
         val file = FileDocumentManager.getInstance().getFile(event.document) ?: return
         if (!file.isValid || file.isInLocalFileSystem.not()) return

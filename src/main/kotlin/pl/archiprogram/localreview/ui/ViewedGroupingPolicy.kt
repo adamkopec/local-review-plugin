@@ -16,7 +16,6 @@ class ViewedGroupingPolicy(
     private val project: Project,
     model: DefaultTreeModel,
 ) : SimpleChangesGroupingPolicy<ViewedBucket>(model) {
-
     override fun getGroupRootValueFor(
         nodePath: StaticFilePath,
         node: ChangesBrowserNode<*>,

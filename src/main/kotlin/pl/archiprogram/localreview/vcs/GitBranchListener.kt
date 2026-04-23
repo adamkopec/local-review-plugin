@@ -1,9 +1,9 @@
 package pl.archiprogram.localreview.vcs
 
 import com.intellij.openapi.project.Project
-import pl.archiprogram.localreview.ui.SafeRefresh
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
+import pl.archiprogram.localreview.ui.SafeRefresh
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -12,21 +12,22 @@ import java.util.concurrent.ConcurrentHashMap
  * branch's viewed-state keys. Instead we remember the last-known branch and let
  * [pl.archiprogram.localreview.vcs.ChangeSetListener.changeListUpdateDone] trigger the refresh.
  */
-class GitBranchListener @JvmOverloads constructor(
-    private val project: Project,
-    private val refresh: (Project) -> Unit = SafeRefresh::scheduleChangesViewRefresh,
-) : GitRepositoryChangeListener {
+class GitBranchListener
+    @JvmOverloads
+    constructor(
+        private val project: Project,
+        private val refresh: (Project) -> Unit = SafeRefresh::scheduleChangesViewRefresh,
+    ) : GitRepositoryChangeListener {
+        private val lastBranch = ConcurrentHashMap<String, String>()
 
-    private val lastBranch = ConcurrentHashMap<String, String>()
-
-    override fun repositoryChanged(repository: GitRepository) {
-        val rootPath = repository.root.path
-        val current = repository.currentBranch?.name ?: "<detached>"
-        val previous = lastBranch.put(rootPath, current)
-        if (previous != null && previous != current) {
-            // Branch actually changed. Kick a refresh — CLM will reconcile, and our
-            // ChangeSetListener will drop or re-surface entries keyed against the new branch.
-            refresh(project)
+        override fun repositoryChanged(repository: GitRepository) {
+            val rootPath = repository.root.path
+            val current = repository.currentBranch?.name ?: "<detached>"
+            val previous = lastBranch.put(rootPath, current)
+            if (previous != null && previous != current) {
+                // Branch actually changed. Kick a refresh — CLM will reconcile, and our
+                // ChangeSetListener will drop or re-surface entries keyed against the new branch.
+                refresh(project)
+            }
         }
     }
-}

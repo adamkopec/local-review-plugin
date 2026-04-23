@@ -6,6 +6,8 @@ import com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactory
 import javax.swing.tree.DefaultTreeModel
 
 class ViewedGroupingPolicyFactory : ChangesGroupingPolicyFactory() {
-    override fun createGroupingPolicy(project: Project, model: DefaultTreeModel): ChangesGroupingPolicy =
-        ViewedGroupingPolicy(project, model)
+    override fun createGroupingPolicy(
+        project: Project,
+        model: DefaultTreeModel,
+    ): ChangesGroupingPolicy = ViewedGroupingPolicy(project, model)
 }

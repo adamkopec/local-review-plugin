@@ -20,7 +20,6 @@ import pl.archiprogram.localreview.hash.ContentHasher
 import pl.archiprogram.localreview.state.Key
 
 class ChangeSetScannerTest {
-
     private val project: Project = mockk(relaxed = true)
     private val hasher: ContentHasher = mockk()
 
@@ -34,7 +33,7 @@ class ChangeSetScannerTest {
         unmockkAll()
     }
 
-    @Test fun scan_simpleChange_addsKeyToCurrent_noRename_noRehashWhenNotViewed() {
+    @Test fun scanSimpleChangeAddsKeyToCurrentNoRenameNoRehashWhenNotViewed() {
         val file = filePath("/r/a.kt")
         val key = Key("/r", "main", "/r/a.kt")
         every { KeyDeriver.keyFor(project, file) } returns key
@@ -47,7 +46,7 @@ class ChangeSetScannerTest {
         assertTrue(result.rehash.isEmpty())
     }
 
-    @Test fun scan_renamedFile_beforeAndAfterPathsDiffer_recordsRename() {
+    @Test fun scanRenamedFileBeforeAndAfterPathsDifferRecordsRename() {
         val beforeFp = filePath("/r/old.kt")
         val afterFp = filePath("/r/new.kt")
         val beforeKey = Key("/r", "main", "/r/old.kt")
@@ -62,7 +61,7 @@ class ChangeSetScannerTest {
         assertTrue(afterKey in result.currentChanges)
     }
 
-    @Test fun scan_changeWithSameBeforeAndAfterKey_noRename() {
+    @Test fun scanChangeWithSameBeforeAndAfterKeyNoRename() {
         val fp = filePath("/r/a.kt")
         val key = Key("/r", "main", "/r/a.kt")
         every { KeyDeriver.keyFor(project, fp) } returns key
@@ -73,7 +72,7 @@ class ChangeSetScannerTest {
         assertTrue(result.renames.isEmpty())
     }
 
-    @Test fun scan_viewedFile_rehashesDefensively() {
+    @Test fun scanViewedFileRehashesDefensively() {
         val vf = mockk<VirtualFile>()
         val fp = filePath("/r/a.kt", vf = vf)
         val key = Key("/r", "main", "/r/a.kt")
@@ -86,7 +85,7 @@ class ChangeSetScannerTest {
         assertEquals("newHashBytes", result.rehash[key])
     }
 
-    @Test fun scan_mergeConflictStatus_skipsRehashEvenIfViewed() {
+    @Test fun scanMergeConflictStatusSkipsRehashEvenIfViewed() {
         val vf = mockk<VirtualFile>()
         val fp = filePath("/r/a.kt", vf = vf)
         val key = Key("/r", "main", "/r/a.kt")
@@ -98,7 +97,7 @@ class ChangeSetScannerTest {
         assertFalse(result.rehash.containsKey(key))
     }
 
-    @Test fun scan_unviewedAndNotRenameTarget_noRehash() {
+    @Test fun scanUnviewedAndNotRenameTargetNoRehash() {
         val vf = mockk<VirtualFile>()
         val fp = filePath("/r/a.kt", vf = vf)
         val key = Key("/r", "main", "/r/a.kt")
@@ -110,7 +109,7 @@ class ChangeSetScannerTest {
         assertTrue(result.rehash.isEmpty())
     }
 
-    @Test fun scan_renameTarget_rehashesEvenIfNotPreviouslyViewed() {
+    @Test fun scanRenameTargetRehashesEvenIfNotPreviouslyViewed() {
         val vf = mockk<VirtualFile>()
         val beforeFp = filePath("/r/old.kt")
         val afterFp = filePath("/r/new.kt", vf = vf)
@@ -127,7 +126,7 @@ class ChangeSetScannerTest {
         assertEquals("newHashBytes", result.rehash[afterKey])
     }
 
-    @Test fun scan_deletedFile_afterRevisionNull_usesBeforeKeyAsCurrent() {
+    @Test fun scanDeletedFileAfterRevisionNullUsesBeforeKeyAsCurrent() {
         val fp = filePath("/r/gone.kt")
         val key = Key("/r", "main", "/r/gone.kt")
         every { KeyDeriver.keyFor(project, fp) } returns key
@@ -141,7 +140,7 @@ class ChangeSetScannerTest {
 
     // ----- unversioned files -----
 
-    @Test fun scan_unversionedFile_keyEntersCurrentChanges_soReviewedMarkSurvivesReconcile() {
+    @Test fun scanUnversionedFileKeyEntersCurrentChangesSoReviewedMarkSurvivesReconcile() {
         // Regression: before this case was handled, marking an unversioned file and then letting
         // CLM fire changeListUpdateDone caused ReviewStateService.reconcile step 2 to drop the
         // mark because the unversioned key wasn't in currentChanges. Reproducible by saving any
@@ -155,7 +154,7 @@ class ChangeSetScannerTest {
         assertTrue(key in result.currentChanges)
     }
 
-    @Test fun scan_unversionedFile_viewed_rehashesDefensively() {
+    @Test fun scanUnversionedFileViewedRehashesDefensively() {
         val vf = mockk<VirtualFile>()
         val fp = filePath("/r/newfile.txt", vf = vf)
         val key = Key("/r", "main", "/r/newfile.txt")
@@ -167,7 +166,7 @@ class ChangeSetScannerTest {
         assertEquals("freshHash", result.rehash[key])
     }
 
-    @Test fun scan_unversionedFile_notViewed_skipsRehash() {
+    @Test fun scanUnversionedFileNotViewedSkipsRehash() {
         val vf = mockk<VirtualFile>()
         val fp = filePath("/r/newfile.txt", vf = vf)
         val key = Key("/r", "main", "/r/newfile.txt")
@@ -179,7 +178,7 @@ class ChangeSetScannerTest {
         assertTrue(result.rehash.isEmpty())
     }
 
-    @Test fun scan_unversionedFile_outsideVcsRoot_stillKeyed_soReconcileDoesNotDrop() {
+    @Test fun scanUnversionedFileOutsideVcsRootStillKeyedSoReconcileDoesNotDrop() {
         // KeyDeriver.keyFor(project, VirtualFile) falls back to keyForNoVcs when the file is
         // outside any VCS root; the FilePath overload returns null in that case. Verify we
         // don't crash and simply skip the file (which is fine: it wouldn't have been markable
@@ -195,22 +194,28 @@ class ChangeSetScannerTest {
 
     // ----- helpers -----
 
-    private fun filePath(p: String, vf: VirtualFile? = null): FilePath = mockk(relaxed = true) {
-        every { path } returns p
-        every { virtualFile } returns vf
-    }
+    private fun filePath(
+        p: String,
+        vf: VirtualFile? = null,
+    ): FilePath =
+        mockk(relaxed = true) {
+            every { path } returns p
+            every { virtualFile } returns vf
+        }
 
     private fun change(
         afterFile: FilePath?,
         beforeFile: FilePath? = null,
         status: FileStatus = FileStatus.MODIFIED,
     ): Change {
-        val afterRev = afterFile?.let { f ->
-            mockk<ContentRevision>(relaxed = true) { every { file } returns f }
-        }
-        val beforeRev = beforeFile?.let { f ->
-            mockk<ContentRevision>(relaxed = true) { every { file } returns f }
-        }
+        val afterRev =
+            afterFile?.let { f ->
+                mockk<ContentRevision>(relaxed = true) { every { file } returns f }
+            }
+        val beforeRev =
+            beforeFile?.let { f ->
+                mockk<ContentRevision>(relaxed = true) { every { file } returns f }
+            }
         return mockk(relaxed = true) {
             every { afterRevision } returns afterRev
             every { beforeRevision } returns beforeRev

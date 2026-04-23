@@ -27,7 +27,6 @@ import pl.archiprogram.localreview.vcs.KeyDeriver
  * unversioned files.
  */
 class CounterWidgetTest {
-
     private val project: Project = mockk(relaxed = true)
     private val service: ReviewStateService = mockk(relaxed = true)
     private val clm: ChangeListManager = mockk(relaxed = true)
@@ -57,11 +56,11 @@ class CounterWidgetTest {
         unmockkAll()
     }
 
-    @Test fun getText_emptyProject_showsEmptyMessage() {
+    @Test fun getTextEmptyProjectShowsEmptyMessage() {
         assertEquals("No changes", CounterWidget(project).getText())
     }
 
-    @Test fun getText_trackedOnly_usesTrackedChanges() {
+    @Test fun getTextTrackedOnlyUsesTrackedChanges() {
         val k = Key("/r", "main", "/r/a.kt")
         val fp = filePath("/r/a.kt")
         val ch = change(afterFile = fp)
@@ -74,7 +73,7 @@ class CounterWidgetTest {
 
     /** The regression: one unversioned file, marked viewed. Previously the widget said
      *  "No changes" because it only looked at `clm.allChanges`. */
-    @Test fun getText_unversionedFileMarkedViewed_isCounted() {
+    @Test fun getTextUnversionedFileMarkedViewedIsCounted() {
         val k = Key("/r", "main", "/r/new.kt")
         val vf = mockk<VirtualFile>()
         val fp = filePath("/r/new.kt", vf = vf)
@@ -88,7 +87,7 @@ class CounterWidgetTest {
     /** Mirrors the user-reported screenshot: one tracked unviewed + one unversioned viewed
      *  should say "Reviewed 1/2", matching the tool window's "1 of 2". Before the fix the
      *  widget reported "Reviewed 0/1" because unversioned files were invisible to it. */
-    @Test fun getText_oneTrackedUnviewedPlusOneUnversionedViewed_reports1of2() {
+    @Test fun getTextOneTrackedUnviewedPlusOneUnversionedViewedReports1of2() {
         val kTracked = Key("/r", "main", "/r/tracked.kt")
         val kUnver = Key("/r", "main", "/r/new.kt")
         val fpTracked = filePath("/r/tracked.kt")
@@ -105,7 +104,7 @@ class CounterWidgetTest {
         assertEquals("Reviewed 1/2", CounterWidget(project).getText())
     }
 
-    @Test fun getText_disposedProject_reportsEmpty() {
+    @Test fun getTextDisposedProjectReportsEmpty() {
         every { project.isDisposed } returns true
 
         assertEquals("No changes", CounterWidget(project).getText())
@@ -113,18 +112,27 @@ class CounterWidgetTest {
 
     // ----- helpers -----
 
-    private fun filePath(p: String, vf: VirtualFile? = null): FilePath = mockk(relaxed = true) {
-        every { path } returns p
-        every { virtualFile } returns vf
-    }
+    private fun filePath(
+        p: String,
+        vf: VirtualFile? = null,
+    ): FilePath =
+        mockk(relaxed = true) {
+            every { path } returns p
+            every { virtualFile } returns vf
+        }
 
-    private fun change(afterFile: FilePath?, beforeFile: FilePath? = null): Change {
-        val afterRev = afterFile?.let { f ->
-            mockk<ContentRevision>(relaxed = true) { every { file } returns f }
-        }
-        val beforeRev = beforeFile?.let { f ->
-            mockk<ContentRevision>(relaxed = true) { every { file } returns f }
-        }
+    private fun change(
+        afterFile: FilePath?,
+        beforeFile: FilePath? = null,
+    ): Change {
+        val afterRev =
+            afterFile?.let { f ->
+                mockk<ContentRevision>(relaxed = true) { every { file } returns f }
+            }
+        val beforeRev =
+            beforeFile?.let { f ->
+                mockk<ContentRevision>(relaxed = true) { every { file } returns f }
+            }
         return mockk(relaxed = true) {
             every { afterRevision } returns afterRev
             every { beforeRevision } returns beforeRev

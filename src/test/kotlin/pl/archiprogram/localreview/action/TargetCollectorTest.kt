@@ -21,7 +21,6 @@ import pl.archiprogram.localreview.state.Key
 import pl.archiprogram.localreview.vcs.KeyDeriver
 
 class TargetCollectorTest {
-
     private val project: Project = mockk(relaxed = true)
     private val clm: ChangeListManager = mockk(relaxed = true)
 
@@ -38,7 +37,7 @@ class TargetCollectorTest {
         unmockkAll()
     }
 
-    @Test fun collect_fromVcsChanges_producesChangedTargets() {
+    @Test fun collectFromVcsChangesProducesChangedTargets() {
         val file = filePath("/repo/a.kt")
         val change = change(afterFile = file)
         val key = Key("/repo", "main", "/repo/a.kt")
@@ -51,7 +50,7 @@ class TargetCollectorTest {
         assertEquals(key, out[0].key)
     }
 
-    @Test fun collect_fromUnversionedPaths_producesUnversionedTargets() {
+    @Test fun collectFromUnversionedPathsProducesUnversionedTargets() {
         val fp = filePath("/repo/new.kt")
         val key = Key("/repo", "main", "/repo/new.kt")
         every { KeyDeriver.keyFor(project, fp) } returns key
@@ -62,7 +61,7 @@ class TargetCollectorTest {
         assertTrue(out[0] is Target.Unversioned)
     }
 
-    @Test fun collect_dedupsByKey_whenSameFileAppearsInMultipleSources() {
+    @Test fun collectDedupsByKeyWhenSameFileAppearsInMultipleSources() {
         val file = filePath("/repo/a.kt")
         val change = change(afterFile = file)
         val key = Key("/repo", "main", "/repo/a.kt")
@@ -74,7 +73,7 @@ class TargetCollectorTest {
         assertEquals(1, out.size)
     }
 
-    @Test fun collect_fromVirtualFileSelection_changeFound_producesChangedTarget() {
+    @Test fun collectFromVirtualFileSelectionChangeFoundProducesChangedTarget() {
         val vf = virtualFile("/repo/a.kt")
         val fp = filePath("/repo/a.kt")
         val change = change(afterFile = fp)
@@ -90,7 +89,7 @@ class TargetCollectorTest {
         assertTrue(out[0] is Target.Changed)
     }
 
-    @Test fun collect_fromVirtualFileSelection_unversioned_producesUnversionedTarget() {
+    @Test fun collectFromVirtualFileSelectionUnversionedProducesUnversionedTarget() {
         val vf = virtualFile("/repo/new.kt")
         val fp = filePath("/repo/new.kt")
         val key = Key("/repo", "main", "/repo/new.kt")
@@ -105,7 +104,7 @@ class TargetCollectorTest {
         assertTrue(out[0] is Target.Unversioned)
     }
 
-    @Test fun collect_fromVirtualFileSelection_notAChange_filteredOut() {
+    @Test fun collectFromVirtualFileSelectionNotAChangeFilteredOut() {
         val vf = virtualFile("/repo/committed.kt")
         every { clm.getChange(vf) } returns null
         every { clm.isUnversioned(vf) } returns false
@@ -115,29 +114,31 @@ class TargetCollectorTest {
         assertTrue(out.isEmpty())
     }
 
-    @Test fun collect_directoryVirtualFile_skipped() {
-        val dir = mockk<VirtualFile> {
-            every { isDirectory } returns true
-            every { isValid } returns true
-        }
+    @Test fun collectDirectoryVirtualFileSkipped() {
+        val dir =
+            mockk<VirtualFile> {
+                every { isDirectory } returns true
+                every { isValid } returns true
+            }
 
         val out = TargetCollector.collect(project, null, null, listOf(dir))
 
         assertTrue(out.isEmpty())
     }
 
-    @Test fun collect_invalidVirtualFile_skipped() {
-        val stale = mockk<VirtualFile> {
-            every { isDirectory } returns false
-            every { isValid } returns false
-        }
+    @Test fun collectInvalidVirtualFileSkipped() {
+        val stale =
+            mockk<VirtualFile> {
+                every { isDirectory } returns false
+                every { isValid } returns false
+            }
 
         val out = TargetCollector.collect(project, null, null, listOf(stale))
 
         assertTrue(out.isEmpty())
     }
 
-    @Test fun collect_changeWithNullKey_skipped() {
+    @Test fun collectChangeWithNullKeySkipped() {
         val file = filePath("/repo/weird.kt")
         val change = change(afterFile = file)
         every { KeyDeriver.keyFor(project, file) } returns null
@@ -149,16 +150,18 @@ class TargetCollectorTest {
 
     // ----- helpers -----
 
-    private fun filePath(p: String): FilePath = mockk(relaxed = true) {
-        every { path } returns p
-        every { virtualFile } returns null
-    }
+    private fun filePath(p: String): FilePath =
+        mockk(relaxed = true) {
+            every { path } returns p
+            every { virtualFile } returns null
+        }
 
-    private fun virtualFile(p: String): VirtualFile = mockk(relaxed = true) {
-        every { path } returns p
-        every { isDirectory } returns false
-        every { isValid } returns true
-    }
+    private fun virtualFile(p: String): VirtualFile =
+        mockk(relaxed = true) {
+            every { path } returns p
+            every { isDirectory } returns false
+            every { isValid } returns true
+        }
 
     private fun change(afterFile: FilePath): Change {
         val afterRev = mockk<ContentRevision>(relaxed = true) { every { file } returns afterFile }

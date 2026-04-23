@@ -14,7 +14,6 @@ import pl.archiprogram.localreview.state.ReviewStateService
 import pl.archiprogram.localreview.ui.SafeRefresh
 
 class MarkAllViewedAction : AnAction() {
-
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
     override fun update(e: AnActionEvent) {
@@ -37,9 +36,10 @@ class MarkAllViewedAction : AnAction() {
                 for (change in changes) {
                     val key = change.key(project) ?: continue
                     if (service.isViewed(key)) continue
-                    val hash = runReadAction {
-                        if (project.isDisposed) null else change.hashAfter()
-                    } ?: continue
+                    val hash =
+                        runReadAction {
+                            if (project.isDisposed) null else change.hashAfter()
+                        } ?: continue
                     service.mark(key, hash)
                 }
             } finally {

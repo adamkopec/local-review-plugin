@@ -9,18 +9,17 @@ import org.junit.Test
 import java.util.concurrent.atomic.AtomicInteger
 
 class GitBranchListenerTest {
-
     private val project: Project = mockk(relaxed = true)
     private val refreshCount = AtomicInteger(0)
     private val listener = GitBranchListener(project) { refreshCount.incrementAndGet() }
 
-    @Test fun firstRepositoryChanged_cachesBranch_doesNotTriggerRefresh() {
+    @Test fun firstRepositoryChangedCachesBranchDoesNotTriggerRefresh() {
         listener.repositoryChanged(fakeRepo(rootPath = "/r", branchName = "main"))
 
         assertEquals(0, refreshCount.get())
     }
 
-    @Test fun sameBranchOnSubsequentCall_doesNotTriggerRefresh() {
+    @Test fun sameBranchOnSubsequentCallDoesNotTriggerRefresh() {
         val repo = fakeRepo(rootPath = "/r", branchName = "main")
 
         listener.repositoryChanged(repo)
@@ -29,21 +28,21 @@ class GitBranchListenerTest {
         assertEquals(0, refreshCount.get())
     }
 
-    @Test fun branchChangeOnSecondCall_triggersRefreshExactlyOnce() {
+    @Test fun branchChangeOnSecondCallTriggersRefreshExactlyOnce() {
         listener.repositoryChanged(fakeRepo(rootPath = "/r", branchName = "main"))
         listener.repositoryChanged(fakeRepo(rootPath = "/r", branchName = "feature"))
 
         assertEquals(1, refreshCount.get())
     }
 
-    @Test fun detachedHeadTransition_triggersRefresh() {
+    @Test fun detachedHeadTransitionTriggersRefresh() {
         listener.repositoryChanged(fakeRepo(rootPath = "/r", branchName = "main"))
         listener.repositoryChanged(fakeRepo(rootPath = "/r", branchName = null))
 
         assertEquals(1, refreshCount.get())
     }
 
-    @Test fun separateReposTrackedIndependently_noRefreshCrossTalk() {
+    @Test fun separateReposTrackedIndependentlyNoRefreshCrossTalk() {
         listener.repositoryChanged(fakeRepo(rootPath = "/a", branchName = "main"))
         listener.repositoryChanged(fakeRepo(rootPath = "/b", branchName = "main"))
         listener.repositoryChanged(fakeRepo(rootPath = "/b", branchName = "feature"))
@@ -51,7 +50,7 @@ class GitBranchListenerTest {
         assertEquals(1, refreshCount.get())
     }
 
-    @Test fun exposesProjectOnlyConstructor_soPlatformCanInstantiateTheListener() {
+    @Test fun exposesProjectOnlyConstructorSoPlatformCanInstantiateTheListener() {
         // The IntelliJ platform's message-bus resolver instantiates `<listener>` classes via
         // reflection and only tries constructors with shapes (), (Project), (CoroutineScope),
         // or (Project, CoroutineScope). The Kotlin default-arg form emits a single
@@ -62,11 +61,15 @@ class GitBranchListenerTest {
         GitBranchListener::class.java.getDeclaredConstructor(Project::class.java)
     }
 
-    private fun fakeRepo(rootPath: String, branchName: String?): GitRepository =
+    private fun fakeRepo(
+        rootPath: String,
+        branchName: String?,
+    ): GitRepository =
         mockk(relaxed = true) {
             every { root.path } returns rootPath
-            every { currentBranch } returns branchName?.let {
-                mockk(relaxed = true) { every { name } returns it }
-            }
+            every { currentBranch } returns
+                branchName?.let {
+                    mockk(relaxed = true) { every { name } returns it }
+                }
         }
 }

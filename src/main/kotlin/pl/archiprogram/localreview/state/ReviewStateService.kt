@@ -2,7 +2,6 @@ package pl.archiprogram.localreview.state
 
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.State as StateAnn
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.service
@@ -13,13 +12,8 @@ import pl.archiprogram.localreview.settings.LocalReviewSettings
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
+import com.intellij.openapi.components.State as StateAnn
 
-/**
- * Project-scoped store of "viewed" marks, persisted to `.idea/cache/local-review-state.xml`.
- *
- * Storage location is [StoragePathMacros.CACHE_FILE] (NOT `WORKSPACE_FILE`) because review marks
- * are strictly per-user; committing them would leak who reviewed what.
- */
 /**
  * Narrow read/write surface that [pl.archiprogram.localreview.mcp.LocalReviewMcpLogic] depends on.
  * Extracted so tests can hand in a plain Kotlin fake instead of a mockk proxy — the IDE's
@@ -27,18 +21,30 @@ import kotlin.concurrent.write
  */
 interface ReviewState {
     fun isViewed(key: Key): Boolean
-    fun mark(key: Key, hashHex: String, now: Long)
+
+    fun mark(
+        key: Key,
+        hashHex: String,
+        now: Long,
+    )
+
     fun unmark(key: Key): Boolean
+
     fun clearAll(): Int
 }
 
+/**
+ * Project-scoped store of "viewed" marks, persisted to `.idea/cache/local-review-state.xml`.
+ *
+ * Storage location is [StoragePathMacros.CACHE_FILE] (NOT `WORKSPACE_FILE`) because review marks
+ * are strictly per-user; committing them would leak who reviewed what.
+ */
 @Service(Service.Level.PROJECT)
 @StateAnn(
     name = "LocalReviewState",
     storages = [Storage(StoragePathMacros.CACHE_FILE)],
 )
 class ReviewStateService(private val project: Project) : PersistentStateComponent<State>, ReviewState {
-
     interface Listener {
         fun stateChanged()
     }
@@ -52,9 +58,10 @@ class ReviewStateService(private val project: Project) : PersistentStateComponen
         val snapshot = lock.read { HashMap(entries) }
         return State().apply {
             version = State.CURRENT_VERSION
-            entries = snapshot.entries
-                .map { (k, v) -> EntryDto(k, v) }
-                .toMutableList()
+            entries =
+                snapshot.entries
+                    .map { (k, v) -> EntryDto(k, v) }
+                    .toMutableList()
         }
     }
 
@@ -87,21 +94,34 @@ class ReviewStateService(private val project: Project) : PersistentStateComponen
     fun size(): Int = lock.read { entries.size }
 
     /** All currently viewed keys whose [Key.repoRoot] and [Key.branch] match the supplied scope. */
-    fun viewedKeysFor(repoRoot: String, branch: String): Set<Key> = lock.read {
-        entries.keys.filterTo(HashSet()) { it.repoRoot == repoRoot && it.branch == branch }
-    }
-
-    fun mark(key: Key, hashHex: String) = mark(key, hashHex, System.currentTimeMillis())
-
-    override fun mark(key: Key, hashHex: String, now: Long) {
-        val changed = lock.write {
-            val existing = entries[key]
-            if (existing != null && existing.hashHex == hashHex) false
-            else {
-                entries[key] = ReviewEntry(hashHex, now)
-                true
-            }
+    fun viewedKeysFor(
+        repoRoot: String,
+        branch: String,
+    ): Set<Key> =
+        lock.read {
+            entries.keys.filterTo(HashSet()) { it.repoRoot == repoRoot && it.branch == branch }
         }
+
+    fun mark(
+        key: Key,
+        hashHex: String,
+    ) = mark(key, hashHex, System.currentTimeMillis())
+
+    override fun mark(
+        key: Key,
+        hashHex: String,
+        now: Long,
+    ) {
+        val changed =
+            lock.write {
+                val existing = entries[key]
+                if (existing != null && existing.hashHex == hashHex) {
+                    false
+                } else {
+                    entries[key] = ReviewEntry(hashHex, now)
+                    true
+                }
+            }
         if (changed) {
             LOG.info("LocalReview: marked key=$key")
             fireChanged()
@@ -114,17 +134,22 @@ class ReviewStateService(private val project: Project) : PersistentStateComponen
         return removed
     }
 
-    fun toggle(key: Key, hashHexIfMarking: String?, now: Long = System.currentTimeMillis()): Boolean {
-        val marked = lock.write {
-            if (entries.containsKey(key)) {
-                entries.remove(key)
-                false
-            } else {
-                if (hashHexIfMarking == null) return@write null
-                entries[key] = ReviewEntry(hashHexIfMarking, now)
-                true
+    fun toggle(
+        key: Key,
+        hashHexIfMarking: String?,
+        now: Long = System.currentTimeMillis(),
+    ): Boolean {
+        val marked =
+            lock.write {
+                if (entries.containsKey(key)) {
+                    entries.remove(key)
+                    false
+                } else {
+                    if (hashHexIfMarking == null) return@write null
+                    entries[key] = ReviewEntry(hashHexIfMarking, now)
+                    true
+                }
             }
-        }
         if (marked != null) fireChanged()
         return marked ?: false
     }
@@ -206,7 +231,10 @@ class ReviewStateService(private val project: Project) : PersistentStateComponen
     }
 
     /** Remove every viewed mark scoped to the given (repoRoot, branch). */
-    fun clearBranch(repoRoot: String, branch: String): Int {
+    fun clearBranch(
+        repoRoot: String,
+        branch: String,
+    ): Int {
         var removed = 0
         lock.write {
             val iter = entries.entries.iterator()
@@ -224,11 +252,12 @@ class ReviewStateService(private val project: Project) : PersistentStateComponen
 
     /** Remove every viewed mark for this project. */
     override fun clearAll(): Int {
-        val removed = lock.write {
-            val n = entries.size
-            entries.clear()
-            n
-        }
+        val removed =
+            lock.write {
+                val n = entries.size
+                entries.clear()
+                n
+            }
         if (removed > 0) fireChanged()
         return removed
     }

@@ -9,8 +9,11 @@ import java.util.concurrent.atomic.AtomicLong
 /** Injectable clock. */
 class FakeClock(initial: Long = 1_700_000_000_000L) {
     private val t = AtomicLong(initial)
+
     fun now(): Long = t.get()
+
     fun advance(millis: Long): Long = t.addAndGet(millis)
+
     fun set(millis: Long) {
         t.set(millis)
     }
@@ -24,7 +27,10 @@ class FakeBranchProvider(
     var callCount = 0
         private set
 
-    override fun currentBranch(project: Project, repoRoot: VirtualFile): String {
+    override fun currentBranch(
+        project: Project,
+        repoRoot: VirtualFile,
+    ): String {
         callCount++
         if (throwOnCall) throw IllegalStateException("scripted failure")
         return branch

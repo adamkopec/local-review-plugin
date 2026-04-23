@@ -1,0 +1,15 @@
+root = true
+
+[*]
+indent_style = space
+indent_size = 4
+end_of_line = lf
+charset = utf-8
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+[*.{kt,kts}]
+# Ktlint configuration. Snake_case function names are only permitted on the MCP toolset — the
+# @McpTool annotation binds the function name to the externally visible tool name, so renaming
+# would break clients. Everything else (tests, helpers, production code) uses camelCase.
+ktlint_function_naming_ignore_when_annotated_with = McpTool

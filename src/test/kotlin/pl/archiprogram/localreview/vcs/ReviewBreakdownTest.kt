@@ -22,7 +22,6 @@ import pl.archiprogram.localreview.state.Key
 import pl.archiprogram.localreview.state.ReviewStateService
 
 class ReviewBreakdownTest {
-
     private val project: Project = mockk(relaxed = true)
     private val service: ReviewStateService = mockk(relaxed = true)
     private val clm: ChangeListManager = mockk(relaxed = true)
@@ -50,7 +49,7 @@ class ReviewBreakdownTest {
         unmockkAll()
     }
 
-    @Test fun compute_disposedProject_returnsEmptyWithoutTouchingCLM() {
+    @Test fun computeDisposedProjectReturnsEmptyWithoutTouchingCLM() {
         every { project.isDisposed } returns true
 
         val out = ReviewBreakdown.compute(project)
@@ -60,7 +59,7 @@ class ReviewBreakdownTest {
         verify(exactly = 0) { ChangeListManager.getInstance(project) }
     }
 
-    @Test fun compute_noChanges_noUnversioned_allZero() {
+    @Test fun computeNoChangesNoUnversionedAllZero() {
         val out = ReviewBreakdown.compute(project)
 
         assertEquals(0, out.viewedCount)
@@ -68,7 +67,7 @@ class ReviewBreakdownTest {
         assertEquals(0, out.totalCount)
     }
 
-    @Test fun compute_trackedOnly_splitsViewedAndUnviewed() {
+    @Test fun computeTrackedOnlySplitsViewedAndUnviewed() {
         val kA = Key("/r", "main", "/r/a.kt")
         val kB = Key("/r", "main", "/r/b.kt")
         val fpA = filePath("/r/a.kt")
@@ -94,7 +93,7 @@ class ReviewBreakdownTest {
 
     /** Regression: widget + tool window counted different sets, because only the modifier
      *  included unversioned files. Must be counted here too. */
-    @Test fun compute_unversionedOnly_viewed_isReflectedInTotals() {
+    @Test fun computeUnversionedOnlyViewedIsReflectedInTotals() {
         val k = Key("/r", "main", "/r/new.kt")
         val vf = mockk<VirtualFile>()
         val fp = filePath("/r/new.kt", vf = vf)
@@ -113,7 +112,7 @@ class ReviewBreakdownTest {
         assertEquals(1, out.totalCount)
     }
 
-    @Test fun compute_unversionedOnly_unviewed_countsInUnviewed() {
+    @Test fun computeUnversionedOnlyUnviewedCountsInUnviewed() {
         val k = Key("/r", "main", "/r/new.kt")
         val vf = mockk<VirtualFile>()
         val fp = filePath("/r/new.kt", vf = vf)
@@ -128,7 +127,7 @@ class ReviewBreakdownTest {
         assertEquals(1, out.totalCount)
     }
 
-    @Test fun compute_mixedTrackedAndUnversioned_combinesIntoTotals() {
+    @Test fun computeMixedTrackedAndUnversionedCombinesIntoTotals() {
         val kT1 = Key("/r", "main", "/r/t1.kt")
         val kT2 = Key("/r", "main", "/r/t2.kt")
         val kU1 = Key("/r", "main", "/r/u1.kt")
@@ -164,7 +163,7 @@ class ReviewBreakdownTest {
     }
 
     /** Deletions: no afterRevision, so the loop falls back to beforeRevision.file. */
-    @Test fun compute_deletedChange_usesBeforeRevision() {
+    @Test fun computeDeletedChangeUsesBeforeRevision() {
         val k = Key("/r", "main", "/r/gone.kt")
         val fp = filePath("/r/gone.kt")
         val ch = change(afterFile = null, beforeFile = fp)
@@ -178,11 +177,12 @@ class ReviewBreakdownTest {
         assertEquals(1, out.viewedCount)
     }
 
-    @Test fun compute_changeWithNoRevisions_isSkipped() {
-        val ch = mockk<Change>(relaxed = true) {
-            every { afterRevision } returns null
-            every { beforeRevision } returns null
-        }
+    @Test fun computeChangeWithNoRevisionsIsSkipped() {
+        val ch =
+            mockk<Change>(relaxed = true) {
+                every { afterRevision } returns null
+                every { beforeRevision } returns null
+            }
         every { clm.allChanges } returns listOf(ch)
 
         val out = ReviewBreakdown.compute(project)
@@ -190,7 +190,7 @@ class ReviewBreakdownTest {
         assertEquals(0, out.totalCount)
     }
 
-    @Test fun compute_changeWhoseKeyDoesNotDerive_isSkipped() {
+    @Test fun computeChangeWhoseKeyDoesNotDeriveIsSkipped() {
         val fp = filePath("/outside/foo.kt")
         val ch = change(afterFile = fp)
         every { KeyDeriver.keyFor(project, fp) } returns null
@@ -201,7 +201,7 @@ class ReviewBreakdownTest {
         assertEquals(0, out.totalCount)
     }
 
-    @Test fun compute_unversionedFilePathWithNullVirtualFile_isSkipped() {
+    @Test fun computeUnversionedFilePathWithNullVirtualFileIsSkipped() {
         val fp = filePath("/r/vanished.kt", vf = null)
         every { clm.unversionedFilesPaths } returns listOf(fp)
 
@@ -212,7 +212,7 @@ class ReviewBreakdownTest {
         verify(exactly = 0) { KeyDeriver.keyFor(project, fp) }
     }
 
-    @Test fun compute_unversionedFilePathWhoseKeyDoesNotDerive_isSkipped() {
+    @Test fun computeUnversionedFilePathWhoseKeyDoesNotDeriveIsSkipped() {
         val vf = mockk<VirtualFile>()
         val fp = filePath("/outside/foo.kt", vf = vf)
         every { KeyDeriver.keyFor(project, fp) } returns null
@@ -225,21 +225,27 @@ class ReviewBreakdownTest {
 
     // ----- helpers -----
 
-    private fun filePath(p: String, vf: VirtualFile? = null): FilePath = mockk(relaxed = true) {
-        every { path } returns p
-        every { virtualFile } returns vf
-    }
+    private fun filePath(
+        p: String,
+        vf: VirtualFile? = null,
+    ): FilePath =
+        mockk(relaxed = true) {
+            every { path } returns p
+            every { virtualFile } returns vf
+        }
 
     private fun change(
         afterFile: FilePath?,
         beforeFile: FilePath? = null,
     ): Change {
-        val afterRev = afterFile?.let { f ->
-            mockk<ContentRevision>(relaxed = true) { every { file } returns f }
-        }
-        val beforeRev = beforeFile?.let { f ->
-            mockk<ContentRevision>(relaxed = true) { every { file } returns f }
-        }
+        val afterRev =
+            afterFile?.let { f ->
+                mockk<ContentRevision>(relaxed = true) { every { file } returns f }
+            }
+        val beforeRev =
+            beforeFile?.let { f ->
+                mockk<ContentRevision>(relaxed = true) { every { file } returns f }
+            }
         return mockk(relaxed = true) {
             every { afterRevision } returns afterRev
             every { beforeRevision } returns beforeRev
