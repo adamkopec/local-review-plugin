@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-04-23
+
+### Fixed
+
+- `GitBranchListener` now exposes a `(Project)` JVM constructor via `@JvmOverloads` on its
+  primary constructor. The 2.14 migration introduced an injectable `refresh: (Project) -> Unit`
+  default arg, which Kotlin emits as a single `(Project, Function1)` constructor — the
+  IntelliJ platform's `<listener>` resolver only accepts `()`, `(Project)`,
+  `(CoroutineScope)`, or `(Project, CoroutineScope)` and rejected it with
+  "Cannot find suitable constructor" when Git published `repositoryChanged` to a real project.
+  Added a reflective regression test so the shape can't drift again.
+- README plugin-description block: replaced curly double-quotes with ASCII quotes. The
+  Marketplace descriptor validator's `^[\w\s\p{Punct}–—]{40,}` regex explicitly allows
+  en/em dashes but not U+201C/U+201D, so the curly quotes at position 29 of the rendered
+  text prevented the description from clearing the 40-character "starts with Latin"
+  threshold.
+
 ## [0.3.0]
 
 Full alignment with the JetBrains `intellij-platform-plugin-template` stack. Minimum supported

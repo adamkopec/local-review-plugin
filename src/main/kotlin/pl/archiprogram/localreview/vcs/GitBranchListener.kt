@@ -12,7 +12,7 @@ import java.util.concurrent.ConcurrentHashMap
  * branch's viewed-state keys. Instead we remember the last-known branch and let
  * [pl.archiprogram.localreview.vcs.ChangeSetListener.changeListUpdateDone] trigger the refresh.
  */
-class GitBranchListener(
+class GitBranchListener @JvmOverloads constructor(
     private val project: Project,
     private val refresh: (Project) -> Unit = SafeRefresh::scheduleChangesViewRefresh,
 ) : GitRepositoryChangeListener {

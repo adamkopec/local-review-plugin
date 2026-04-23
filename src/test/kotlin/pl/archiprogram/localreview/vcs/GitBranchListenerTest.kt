@@ -51,6 +51,17 @@ class GitBranchListenerTest {
         assertEquals(1, refreshCount.get())
     }
 
+    @Test fun exposesProjectOnlyConstructor_soPlatformCanInstantiateTheListener() {
+        // The IntelliJ platform's message-bus resolver instantiates `<listener>` classes via
+        // reflection and only tries constructors with shapes (), (Project), (CoroutineScope),
+        // or (Project, CoroutineScope). The Kotlin default-arg form emits a single
+        // `(Project, Function1)` constructor, which the resolver rejects with:
+        //   "Cannot find suitable constructor, expected (Project), ..."
+        // @JvmOverloads on the primary constructor also emits a `(Project)` bridge. Guard that
+        // shape here so we don't regress again.
+        GitBranchListener::class.java.getDeclaredConstructor(Project::class.java)
+    }
+
     private fun fakeRepo(rootPath: String, branchName: String?): GitRepository =
         mockk(relaxed = true) {
             every { root.path } returns rootPath
