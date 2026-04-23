@@ -20,12 +20,24 @@ import kotlin.concurrent.write
  * Storage location is [StoragePathMacros.CACHE_FILE] (NOT `WORKSPACE_FILE`) because review marks
  * are strictly per-user; committing them would leak who reviewed what.
  */
+/**
+ * Narrow read/write surface that [pl.archiprogram.localreview.mcp.LocalReviewMcpLogic] depends on.
+ * Extracted so tests can hand in a plain Kotlin fake instead of a mockk proxy — the IDE's
+ * coroutines-debug javaagent conflicts with mockk's inline instrumentation on Kotlin final classes.
+ */
+interface ReviewState {
+    fun isViewed(key: Key): Boolean
+    fun mark(key: Key, hashHex: String, now: Long)
+    fun unmark(key: Key): Boolean
+    fun clearAll(): Int
+}
+
 @Service(Service.Level.PROJECT)
 @StateAnn(
     name = "LocalReviewState",
     storages = [Storage(StoragePathMacros.CACHE_FILE)],
 )
-class ReviewStateService(private val project: Project) : PersistentStateComponent<State> {
+class ReviewStateService(private val project: Project) : PersistentStateComponent<State>, ReviewState {
 
     interface Listener {
         fun stateChanged()
@@ -68,7 +80,7 @@ class ReviewStateService(private val project: Project) : PersistentStateComponen
 
     // ----- Core ops -----
 
-    fun isViewed(key: Key): Boolean = lock.read { entries.containsKey(key) }
+    override fun isViewed(key: Key): Boolean = lock.read { entries.containsKey(key) }
 
     fun getEntry(key: Key): ReviewEntry? = lock.read { entries[key] }
 
@@ -79,7 +91,9 @@ class ReviewStateService(private val project: Project) : PersistentStateComponen
         entries.keys.filterTo(HashSet()) { it.repoRoot == repoRoot && it.branch == branch }
     }
 
-    fun mark(key: Key, hashHex: String, now: Long = System.currentTimeMillis()) {
+    fun mark(key: Key, hashHex: String) = mark(key, hashHex, System.currentTimeMillis())
+
+    override fun mark(key: Key, hashHex: String, now: Long) {
         val changed = lock.write {
             val existing = entries[key]
             if (existing != null && existing.hashHex == hashHex) false
@@ -94,7 +108,7 @@ class ReviewStateService(private val project: Project) : PersistentStateComponen
         }
     }
 
-    fun unmark(key: Key): Boolean {
+    override fun unmark(key: Key): Boolean {
         val removed = lock.write { entries.remove(key) != null }
         if (removed) fireChanged()
         return removed
@@ -209,7 +223,7 @@ class ReviewStateService(private val project: Project) : PersistentStateComponen
     }
 
     /** Remove every viewed mark for this project. */
-    fun clearAll(): Int {
+    override fun clearAll(): Int {
         val removed = lock.write {
             val n = entries.size
             entries.clear()

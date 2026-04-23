@@ -11,10 +11,10 @@ import io.mockk.mockk
 import io.mockk.mockkObject
 import io.mockk.mockkStatic
 import io.mockk.unmockkAll
-import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Test
+import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Before
+import org.junit.Test
 import pl.archiprogram.localreview.LocalReviewBundle
 import pl.archiprogram.localreview.state.Key
 import pl.archiprogram.localreview.state.ReviewStateService
@@ -32,7 +32,7 @@ class CounterWidgetTest {
     private val service: ReviewStateService = mockk(relaxed = true)
     private val clm: ChangeListManager = mockk(relaxed = true)
 
-    @BeforeEach
+    @Before
     fun setUp() {
         every { project.isDisposed } returns false
 
@@ -52,7 +52,7 @@ class CounterWidgetTest {
         every { clm.unversionedFilesPaths } returns emptyList()
     }
 
-    @AfterEach
+    @After
     fun tearDown() {
         unmockkAll()
     }

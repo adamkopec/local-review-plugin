@@ -5,46 +5,44 @@ import org.jetbrains.intellij.platform.gradle.TestFrameworkType
 import org.jetbrains.intellij.platform.gradle.tasks.VerifyPluginTask.FailureLevel
 
 plugins {
-    id("org.jetbrains.kotlin.jvm") version "2.0.21"
-    id("org.jetbrains.intellij.platform") version "2.9.0"
-    id("org.jetbrains.kotlinx.kover") version "0.8.3"
-    id("org.jetbrains.changelog") version "2.2.1"
+    id("org.jetbrains.kotlin.jvm")
+    id("org.jetbrains.intellij.platform")
+    id("org.jetbrains.kotlinx.kover") version "0.9.8"
+    id("org.jetbrains.changelog")
 }
 
 group = providers.gradleProperty("pluginGroup").get()
 version = providers.gradleProperty("pluginVersion").get()
 
-repositories {
-    mavenCentral()
-    intellijPlatform {
-        defaultRepositories()
-    }
-}
-
 dependencies {
     intellijPlatform {
-        intellijIdeaCommunity(providers.gradleProperty("platformVersion"))
+        intellijIdea("2025.2.6.1")
         bundledPlugin("Git4Idea")
-        testFramework(TestFrameworkType.Platform)
-        testFramework(TestFrameworkType.JUnit5)
+        bundledPlugin("com.intellij.mcpServer")
+        testFramework(TestFrameworkType.Bundled)
     }
-    testImplementation("org.junit.jupiter:junit-jupiter:5.10.3")
-    testRuntimeOnly("org.junit.vintage:junit-vintage-engine:5.10.3")
-    // `com.intellij.mcpserver.*` stubs are stripped from the main plugin jar, but Jupiter's
-    // class-discovery step tries to load LocalReviewToolset while scanning tests — that
-    // triggers a transitive load of McpToolset. Re-add the stubs via a stand-alone jar on
-    // the test runtime classpath so test discovery succeeds; the plugin zip is unaffected.
-    testRuntimeOnly(files(layout.buildDirectory.file("libs-stubs/local-review-mcp-stubs.jar")).builtBy("mcpStubsJar"))
-    testImplementation("io.kotest:kotest-assertions-core:5.9.1")
-    testImplementation("io.kotest:kotest-property:5.9.1")
-    testImplementation("io.mockk:mockk:1.13.12")
-    testImplementation("org.opentest4j:opentest4j:1.3.0")
     testImplementation("junit:junit:4.13.2")
+    // The IntelliJ test framework ships its own kotlinx-coroutines fork (`*-intellij-N`) via
+    // `com.jetbrains.intellij.platform:test-framework`; letting mockk/kotest pull vanilla
+    // coroutines shadows `runBlockingWithParallelismCompensation` at runtime.
+    testImplementation("io.mockk:mockk:1.13.12") {
+        exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-core")
+        exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-core-jvm")
+        exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-jdk8")
+    }
+    testImplementation("io.kotest:kotest-assertions-core:5.9.1") {
+        exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-core")
+        exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-core-jvm")
+    }
+    testImplementation("io.kotest:kotest-property:5.9.1") {
+        exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-core")
+        exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-core-jvm")
+    }
     testImplementation("org.eclipse.jgit:org.eclipse.jgit:6.10.0.202406032230-r")
 }
 
 kotlin {
-    jvmToolchain(17)
+    jvmToolchain(21)
 }
 
 intellijPlatform {
@@ -53,25 +51,18 @@ intellijPlatform {
         name = providers.gradleProperty("pluginName")
         version = providers.gradleProperty("pluginVersion")
 
-        // Extract the <Plugin description> block from README.md and convert to HTML.
-        // Single source of truth: same text appears on GitHub and on the Marketplace listing.
-        description = providers.fileContents(
-            layout.projectDirectory.file("README.md"),
-        ).asText.map {
+        description = providers.fileContents(layout.projectDirectory.file("README.md")).asText.map {
             val start = "<!-- Plugin description -->"
             val end = "<!-- Plugin description end -->"
             with(it.lines()) {
                 if (!containsAll(listOf(start, end))) {
-                    error("Plugin description markers not found in README.md")
+                    throw GradleException("Plugin description section not found in README.md:\n$start ... $end")
                 }
-                subList(indexOf(start) + 1, indexOf(end))
-                    .joinToString("\n")
-                    .let(::markdownToHTML)
+                subList(indexOf(start) + 1, indexOf(end)).joinToString("\n").let(::markdownToHTML)
             }
         }
 
-        // Pull release notes from CHANGELOG.md. Shows the current version's section if
-        // already released, otherwise the [Unreleased] section during development.
+        val changelog = project.changelog
         changeNotes = providers.gradleProperty("pluginVersion").map { pluginVersion ->
             with(changelog) {
                 renderItem(
@@ -83,10 +74,6 @@ intellijPlatform {
             }
         }
 
-        ideaVersion {
-            sinceBuild = providers.gradleProperty("pluginSinceBuild")
-            untilBuild = providers.gradleProperty("pluginUntilBuild")
-        }
         vendor {
             name = "Adam Kopeć"
             email = "adam.kopec@gmail.com"
@@ -110,15 +97,10 @@ intellijPlatform {
 
     pluginVerification {
         ides {
-            ide(IntelliJPlatformType.IntellijIdeaCommunity, "2024.1")
-            ide(IntelliJPlatformType.PyCharmCommunity, "2024.1")
-            ide(IntelliJPlatformType.GoLand, "2024.1")
-            ide(IntelliJPlatformType.IntellijIdeaCommunity, "2025.2.1")
+            create(IntelliJPlatformType.IntellijIdeaCommunity, "2025.2.6.1")
+            create(IntelliJPlatformType.PyCharmCommunity, "2025.2.3")
+            create(IntelliJPlatformType.GoLand, "2025.2.3")
         }
-        // MISSING_DEPENDENCIES is intentionally not here: our `com.intellij.mcpServer`
-        // dep is optional (only present on IDE 2025.2+), and the verifier's transitive
-        // walk picks up bundled-plugin-to-bundled-plugin misses that aren't our problem.
-        // Per-IDE verdicts still show "Compatible" for all targets.
         failureLevel = listOf(
             FailureLevel.COMPATIBILITY_PROBLEMS,
             FailureLevel.INVALID_PLUGIN,
@@ -152,8 +134,6 @@ intellijPlatformTesting {
     }
 }
 
-// Separate source set + task for Remote Robot UI tests. They require a running IDE launched via
-// `runIdeForUiTests`; keep them out of the regular `test` task so they don't block CI.
 sourceSets {
     create("uiTest") {
         kotlin.srcDir("src/uiTest/kotlin")
@@ -179,16 +159,19 @@ tasks.register<Test>("uiTest") {
     group = "verification"
     testClassesDirs = sourceSets["uiTest"].output.classesDirs
     classpath = sourceSets["uiTest"].runtimeClasspath
-    useJUnitPlatform()
     systemProperty("robot-server.port", "8082")
-    // Don't fail the suite when the IDE isn't up — fail fast with a clear message in the test.
+    jvmArgs(
+        "-Xmx2g",
+        "--add-opens=java.base/java.lang=ALL-UNNAMED",
+        "--add-opens=java.base/java.util=ALL-UNNAMED",
+        "--add-opens=java.base/java.util.concurrent=ALL-UNNAMED",
+        "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED",
+    )
     shouldRunAfter("test")
 }
 
 tasks {
     test {
-        useJUnitPlatform()
-        maxParallelForks = 1
         jvmArgs(
             "-Xmx2g",
             "--add-opens=java.base/java.lang=ALL-UNNAMED",
@@ -198,39 +181,11 @@ tasks {
         )
         systemProperty("idea.test.cyclic.buffer.size", "1048576")
     }
-    // Keep the com.intellij.mcpserver.* compile-time stubs out of every distributed jar.
-    // At runtime on IDEs 2025.2+ the bundled MCP Server plugin supplies the real classes via
-    // the optional descriptor's classloader; on older IDEs the optional descriptor never
-    // loads, so the stubs are dead code — but shipping them would create classloader
-    // conflicts where the stub (loaded first from the plugin's own classpath) shadows the
-    // bundled real class. The exclusion applies to `jar`, `instrumentedJar`, and `composedJar`
-    // so the stubs never reach prepareSandbox / buildPlugin.
-    jar { exclude("com/intellij/mcpserver/**") }
-    named("instrumentedJar", org.gradle.jvm.tasks.Jar::class) {
-        exclude("com/intellij/mcpserver/**")
-    }
-    named("composedJar", org.gradle.jvm.tasks.Jar::class) {
-        exclude("com/intellij/mcpserver/**")
-    }
-
-    // Standalone jar containing ONLY the stub classes, added to the test runtime classpath
-    // so Jupiter can still resolve `LocalReviewToolset` during class discovery. Not part of
-    // any distribution artifact.
-    register<org.gradle.jvm.tasks.Jar>("mcpStubsJar") {
-        archiveBaseName.set("local-review-mcp-stubs")
-        archiveVersion.set("")
-        from(sourceSets["main"].output) {
-            include("com/intellij/mcpserver/**")
-        }
-        destinationDirectory.set(layout.buildDirectory.dir("libs-stubs"))
-        dependsOn("compileKotlin")
-    }
     wrapper {
-        gradleVersion = "8.13"
+        gradleVersion = "9.4.1"
     }
-    // Include the repo-root LICENSE file alongside the bundled jars so the plugin zip is
-    // self-contained for auditors / users inspecting it offline. The Marketplace listing
-    // and GitHub's license detector pick up the license from the repo root regardless.
+    // Bundle the repo-root LICENSE into the plugin zip so the distribution is self-contained
+    // for offline auditors.
     prepareSandbox {
         from(layout.projectDirectory.file("LICENSE")) {
             into(rootProject.name)
@@ -257,10 +212,6 @@ kover {
                     "pl.archiprogram.localreview.settings.LocalReviewConfigurable*",
                     "pl.archiprogram.localreview.startup.*",
                     "pl.archiprogram.localreview.diagnostics.*",
-                    // Presence-detection helper; uses IntelliJ plugin lookup APIs that
-                    // can't be unit-tested without a running platform. Tool handlers and
-                    // PathResolver remain covered.
-                    "pl.archiprogram.localreview.mcp.McpPluginPresence*",
                 )
             }
         }

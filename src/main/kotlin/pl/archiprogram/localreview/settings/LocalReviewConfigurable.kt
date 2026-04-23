@@ -6,7 +6,6 @@ import com.intellij.ui.dsl.builder.bindIntText
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
 import pl.archiprogram.localreview.LocalReviewBundle
-import pl.archiprogram.localreview.mcp.isMcpServerPluginAvailable
 import javax.swing.JComponent
 
 class LocalReviewConfigurable : Configurable {
@@ -24,9 +23,6 @@ class LocalReviewConfigurable : Configurable {
     override fun getDisplayName(): String = LocalReviewBundle.message("settings.title")
 
     override fun createComponent(): JComponent {
-        // Capture once at dialog open — the MCP plugin can't be installed without an IDE restart
-        // on the IDE versions we target, so the value is stable for the dialog's lifetime.
-        val mcpPresent = isMcpServerPluginAvailable()
         return panel {
             group(LocalReviewBundle.message("settings.group.behavior")) {
                 row(LocalReviewBundle.message("settings.ttlDays")) {
@@ -48,11 +44,7 @@ class LocalReviewConfigurable : Configurable {
                 row {
                     mcpToolsCheckBox = checkBox(LocalReviewBundle.message("settings.enableMcpTools"))
                         .bindSelected(model::enableMcpTools)
-                        .comment(
-                            if (mcpPresent) LocalReviewBundle.message("settings.enableMcpTools.comment")
-                            else LocalReviewBundle.message("settings.enableMcpTools.missing"),
-                        )
-                        .enabled(mcpPresent)
+                        .comment(LocalReviewBundle.message("settings.enableMcpTools.comment"))
                         .component
                 }
             }

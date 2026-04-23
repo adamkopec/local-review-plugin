@@ -1,9 +1,9 @@
 package pl.archiprogram.localreview.hash
 
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotEquals
-import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.Test
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertTrue
+import org.junit.Test
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
@@ -40,7 +40,7 @@ class ContentHasherTest {
     @Test fun digestIsLowercaseHex_64chars() {
         val d = hasher.hashBytes("x".toByteArray())
         assertEquals(64, d.length)
-        assertTrue(d.all { it in '0'..'9' || it in 'a'..'f' }, "got: $d")
+        assertTrue("got: $d", d.all { it in '0'..'9' || it in 'a'..'f' })
     }
 
     @Test fun fallbackHash_stable_whenLengthAndStampUnchanged() {

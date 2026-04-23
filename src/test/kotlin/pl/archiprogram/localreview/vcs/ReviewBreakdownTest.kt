@@ -12,12 +12,12 @@ import io.mockk.mockkObject
 import io.mockk.mockkStatic
 import io.mockk.unmockkAll
 import io.mockk.verify
-import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertSame
-import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Test
+import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertSame
+import org.junit.Assert.assertTrue
+import org.junit.Before
+import org.junit.Test
 import pl.archiprogram.localreview.state.Key
 import pl.archiprogram.localreview.state.ReviewStateService
 
@@ -27,7 +27,7 @@ class ReviewBreakdownTest {
     private val service: ReviewStateService = mockk(relaxed = true)
     private val clm: ChangeListManager = mockk(relaxed = true)
 
-    @BeforeEach
+    @Before
     fun setUp() {
         every { project.isDisposed } returns false
 
@@ -45,7 +45,7 @@ class ReviewBreakdownTest {
         every { clm.unversionedFilesPaths } returns emptyList()
     }
 
-    @AfterEach
+    @After
     fun tearDown() {
         unmockkAll()
     }

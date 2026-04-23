@@ -13,12 +13,12 @@ import io.mockk.mockk
 import io.mockk.mockkObject
 import io.mockk.mockkStatic
 import io.mockk.unmockkAll
-import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Test
+import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
+import org.junit.Before
+import org.junit.Test
 import pl.archiprogram.localreview.state.Key
 import pl.archiprogram.localreview.state.ReviewStateService
 
@@ -28,14 +28,14 @@ class ToggleViewedActionTest {
     private val project: Project = mockk(relaxed = true)
     private val service: ReviewStateService = mockk(relaxed = true)
 
-    @BeforeEach
+    @Before
     fun setUp() {
         mockkObject(TargetCollector)
         mockkStatic(ReviewStateService::class)
         every { ReviewStateService.getInstance(project) } returns service
     }
 
-    @AfterEach
+    @After
     fun tearDown() {
         unmockkAll()
     }
@@ -91,10 +91,10 @@ class ToggleViewedActionTest {
         assertTrue(presentation.isEnabled)
         // Text changes between the two bundle keys — we assert the visible form contains "Not".
         assertTrue(
+            "Expected 'unmark' wording, got: ${presentation.text}",
             presentation.text.contains("Not", ignoreCase = true) ||
                 presentation.text.contains("Unmark", ignoreCase = true) ||
                 presentation.text.contains("Unviewed", ignoreCase = true),
-            "Expected 'unmark' wording, got: ${presentation.text}",
         )
     }
 
@@ -116,9 +116,9 @@ class ToggleViewedActionTest {
 
         assertTrue(presentation.isEnabled)
         assertFalse(
+            "Expected 'mark' wording, got: ${presentation.text}",
             presentation.text.contains("Not", ignoreCase = true) &&
                 presentation.text.contains("Reviewed", ignoreCase = true),
-            "Expected 'mark' wording, got: ${presentation.text}",
         )
     }
 

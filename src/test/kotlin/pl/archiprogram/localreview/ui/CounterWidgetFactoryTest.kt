@@ -3,9 +3,9 @@ package pl.archiprogram.localreview.ui
 import com.intellij.openapi.project.Project
 import io.mockk.every
 import io.mockk.mockk
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.Test
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
+import org.junit.Test
 
 class CounterWidgetFactoryTest {
 

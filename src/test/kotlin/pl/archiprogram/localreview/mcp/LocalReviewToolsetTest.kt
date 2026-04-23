@@ -8,13 +8,13 @@ import io.mockk.mockk
 import io.mockk.mockkObject
 import io.mockk.unmockkAll
 import kotlinx.coroutines.runBlocking
-import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertThrows
-import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Test
+import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertThrows
+import org.junit.Assert.assertTrue
+import org.junit.Before
+import org.junit.Test
 import pl.archiprogram.localreview.settings.LocalReviewSettings
 import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
@@ -36,26 +36,21 @@ class LocalReviewToolsetTest {
 
     private val settings: LocalReviewSettings = mockk(relaxed = true)
 
-    @BeforeEach
+    @Before
     fun setUp() {
-        // NB: don't mockkStatic(ApplicationManager::class) here. The platform spins up
-        // background coroutines (e.g. ShadeIndexDumbModeTracker on 2024.2) that call
-        // ApplicationManager.getApplication().getService(ReadWriteActionSupport::class.java);
-        // a relaxed-mock application returns Object, which ClassCast-bombs and the JUnit5
-        // TestUncaughtExceptionHandler fails the test even though our assertion passes.
         mockkObject(LocalReviewSettings.Companion)
         every { LocalReviewSettings.getInstance() } returns settings
     }
 
-    @AfterEach
+    @After
     fun tearDown() {
         unmockkAll()
     }
 
     @Test fun class_implements_McpToolset() {
         assertTrue(
-            LocalReviewToolset::class.isSubclassOf(McpToolset::class),
             "LocalReviewToolset must implement McpToolset so ReflectionToolsProvider picks it up.",
+            LocalReviewToolset::class.isSubclassOf(McpToolset::class),
         )
     }
 
@@ -65,6 +60,7 @@ class LocalReviewToolsetTest {
         }.toSet()
 
         assertEquals(
+            "Tool name set is part of the user-prompt contract; changes must be deliberate.",
             setOf(
                 "local_review_list_changes",
                 "local_review_mark_all_viewed",
@@ -73,7 +69,6 @@ class LocalReviewToolsetTest {
                 "local_review_unmark_files",
             ),
             names,
-            "Tool name set is part of the user-prompt contract; changes must be deliberate.",
         )
     }
 
@@ -81,14 +76,14 @@ class LocalReviewToolsetTest {
         val missing = toolAnnotatedFunctions(LocalReviewToolset::class).filter {
             it.findAnnotation<McpDescription>()?.description.isNullOrBlank()
         }
-        assertTrue(missing.isEmpty(), "Missing @McpDescription on: ${missing.map { it.name }}")
+        assertTrue("Missing @McpDescription on: ${missing.map { it.name }}", missing.isEmpty())
     }
 
     @Test fun every_tool_is_a_suspend_function() {
         val nonSuspend = toolAnnotatedFunctions(LocalReviewToolset::class).filterNot { it.isSuspend }
         assertTrue(
-            nonSuspend.isEmpty(),
             "Reflection-scanned MCP tools must be suspend fun. Non-suspend: ${nonSuspend.map { it.name }}",
+            nonSuspend.isEmpty(),
         )
     }
 

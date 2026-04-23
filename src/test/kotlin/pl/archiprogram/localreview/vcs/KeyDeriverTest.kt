@@ -9,11 +9,11 @@ import io.mockk.mockk
 import io.mockk.mockkObject
 import io.mockk.mockkStatic
 import io.mockk.unmockkAll
-import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNull
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Test
+import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
+import org.junit.Before
+import org.junit.Test
 import pl.archiprogram.localreview.state.Key
 
 class KeyDeriverTest {
@@ -22,7 +22,7 @@ class KeyDeriverTest {
     private val vcsManager: ProjectLevelVcsManager = mockk()
     private val fakeProvider = ScriptedBranchProvider()
 
-    @BeforeEach
+    @Before
     fun setUp() {
         mockkStatic(ProjectLevelVcsManager::class)
         every { ProjectLevelVcsManager.getInstance(project) } returns vcsManager
@@ -30,7 +30,7 @@ class KeyDeriverTest {
         every { BranchProvider.getInstance() } returns fakeProvider
     }
 
-    @AfterEach
+    @After
     fun tearDown() {
         unmockkAll()
     }

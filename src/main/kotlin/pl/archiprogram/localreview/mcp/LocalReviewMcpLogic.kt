@@ -9,6 +9,7 @@ import pl.archiprogram.localreview.action.key
 import pl.archiprogram.localreview.hash.ContentHasher
 import pl.archiprogram.localreview.settings.LocalReviewSettings
 import pl.archiprogram.localreview.state.Key
+import pl.archiprogram.localreview.state.ReviewState
 import pl.archiprogram.localreview.state.ReviewStateService
 
 /**
@@ -37,10 +38,13 @@ internal data class PathResult(
     val result: String,
 )
 
-internal fun listChanges(project: Project): List<ChangeEntry> {
+internal fun listChanges(
+    project: Project,
+    service: ReviewState = ReviewStateService.getInstance(project),
+    clm: ChangeListManager = ChangeListManager.getInstance(project),
+): List<ChangeEntry> {
     if (project.isDisposed) return emptyList()
-    val service = ReviewStateService.getInstance(project)
-    return ChangeListManager.getInstance(project).allChanges.mapNotNull { change ->
+    return clm.allChanges.mapNotNull { change ->
         val key = change.key(project) ?: return@mapNotNull null
         ChangeEntry(
             path = key.path,
@@ -50,30 +54,40 @@ internal fun listChanges(project: Project): List<ChangeEntry> {
     }
 }
 
-internal fun markAllViewed(project: Project): Int {
+internal fun markAllViewed(
+    project: Project,
+    service: ReviewState = ReviewStateService.getInstance(project),
+    clm: ChangeListManager = ChangeListManager.getInstance(project),
+): Int {
     if (project.isDisposed) return 0
-    val service = ReviewStateService.getInstance(project)
     var marked = 0
-    for (change in ChangeListManager.getInstance(project).allChanges) {
+    for (change in clm.allChanges) {
         if (change.fileStatus == FileStatus.MERGED_WITH_CONFLICTS) continue
         val key = change.key(project) ?: continue
         if (service.isViewed(key)) continue
         val hash = change.hashAfter() ?: continue
-        service.mark(key, hash)
+        service.mark(key, hash, System.currentTimeMillis())
         marked++
     }
     return marked
 }
 
-internal fun unmarkAll(project: Project): Int {
+internal fun unmarkAll(
+    project: Project,
+    service: ReviewState = ReviewStateService.getInstance(project),
+): Int {
     if (project.isDisposed) return 0
-    return ReviewStateService.getInstance(project).clearAll()
+    return service.clearAll()
 }
 
-internal fun markFiles(project: Project, paths: List<String>): List<PathResult> {
+internal fun markFiles(
+    project: Project,
+    paths: List<String>,
+    service: ReviewState = ReviewStateService.getInstance(project),
+    clm: ChangeListManager = ChangeListManager.getInstance(project),
+): List<PathResult> {
     if (project.isDisposed) return paths.map { PathResult(it, "project_disposed") }
-    val service = ReviewStateService.getInstance(project)
-    val currentByKey: Map<Key, Change> = ChangeListManager.getInstance(project).allChanges
+    val currentByKey: Map<Key, Change> = clm.allChanges
         .mapNotNull { c -> c.key(project)?.let { it to c } }
         .toMap()
     return paths.map { path ->
@@ -93,7 +107,7 @@ internal fun markFiles(project: Project, paths: List<String>): List<PathResult> 
                         if (hash == null) {
                             "hash_unavailable"
                         } else {
-                            service.mark(outcome.key, hash)
+                            service.mark(outcome.key, hash, System.currentTimeMillis())
                             "marked"
                         }
                     }
@@ -104,9 +118,12 @@ internal fun markFiles(project: Project, paths: List<String>): List<PathResult> 
     }
 }
 
-internal fun unmarkFiles(project: Project, paths: List<String>): List<PathResult> {
+internal fun unmarkFiles(
+    project: Project,
+    paths: List<String>,
+    service: ReviewState = ReviewStateService.getInstance(project),
+): List<PathResult> {
     if (project.isDisposed) return paths.map { PathResult(it, "project_disposed") }
-    val service = ReviewStateService.getInstance(project)
     return paths.map { path ->
         val result = when (val outcome = PathResolver.resolve(project, path)) {
             is PathResolver.Outcome.BlankPath -> "blank_path"

@@ -1,48 +1,36 @@
 package pl.archiprogram.localreview.mcp
 
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.Test
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.junit.Test
 
 /**
- * Structural checks on the two plugin manifest files. These fail fast when someone:
- *  - accidentally references the [pl.archiprogram.localreview.mcp] package from the main
- *    `plugin.xml` (which would break classloading on IDEs without MCP Server);
+ * Structural checks on the plugin manifest. These fail fast when someone:
  *  - typos the MCP extension namespace (which fails silently — tools simply don't register);
- *  - forgets to register one of the five tools.
+ *  - forgets to register the toolset with its fully-qualified class name.
  */
 class PluginManifestTest {
 
-    @Test fun main_plugin_xml_does_not_reference_mcp_package() {
+    @Test fun plugin_xml_declares_mcp_namespace() {
         val xml = readResource("META-INF/plugin.xml")
-        assertFalse(
-            xml.contains("pl.archiprogram.localreview.mcp"),
-            "main plugin.xml must not reference the mcp package — classes there must only be " +
-                "reachable via the optional pl.archiprogram.localreview-mcp.xml descriptor.",
-        )
-    }
-
-    @Test fun mcp_descriptor_has_correct_namespace() {
-        val xml = readResource("META-INF/pl.archiprogram.localreview-mcp.xml")
         assertTrue(
-            xml.contains("""defaultExtensionNs="com.intellij.mcpServer""""),
-            "MCP descriptor must declare extensions under the com.intellij.mcpServer namespace; " +
+            "plugin.xml must declare extensions under com.intellij.mcpServer; " +
                 "a typo there silently drops the tool registrations.",
+            xml.contains("""defaultExtensionNs="com.intellij.mcpServer""""),
         )
     }
 
-    @Test fun mcp_descriptor_registers_the_toolset_with_its_fully_qualified_class() {
-        val xml = readResource("META-INF/pl.archiprogram.localreview-mcp.xml")
+    @Test fun plugin_xml_registers_the_toolset_with_its_fully_qualified_class() {
+        val xml = readResource("META-INF/plugin.xml")
         val pattern = Regex(
             """<mcpToolset\s+implementation="(pl\.archiprogram\.localreview\.mcp\.[A-Za-z]+)"\s*/>""",
         )
         val impls = pattern.findAll(xml).map { it.groupValues[1] }.toSet()
 
         assertEquals(
+            "plugin.xml must register exactly LocalReviewToolset under <mcpToolset>.",
             setOf("pl.archiprogram.localreview.mcp.LocalReviewToolset"),
             impls,
-            "MCP descriptor must register exactly LocalReviewToolset under <mcpToolset>.",
         )
     }
 

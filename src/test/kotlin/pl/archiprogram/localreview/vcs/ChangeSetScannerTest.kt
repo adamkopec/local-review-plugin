@@ -10,12 +10,12 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
 import io.mockk.unmockkAll
-import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Test
+import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
+import org.junit.Before
+import org.junit.Test
 import pl.archiprogram.localreview.hash.ContentHasher
 import pl.archiprogram.localreview.state.Key
 
@@ -24,12 +24,12 @@ class ChangeSetScannerTest {
     private val project: Project = mockk(relaxed = true)
     private val hasher: ContentHasher = mockk()
 
-    @BeforeEach
+    @Before
     fun setUp() {
         mockkObject(KeyDeriver)
     }
 
-    @AfterEach
+    @After
     fun tearDown() {
         unmockkAll()
     }

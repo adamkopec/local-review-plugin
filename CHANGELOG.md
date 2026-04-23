@@ -7,6 +7,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0]
+
+Full alignment with the JetBrains `intellij-platform-plugin-template` stack. Minimum supported
+IDE is now **IntelliJ 2025.2.6.1** — older 2024.x versions are no longer supported.
+
+### Changed
+
+- **Toolchain bumped across the board**: Gradle 8.13 → 9.4.1, IntelliJ Platform Gradle Plugin
+  2.9.0 → 2.14.0 (wired via `org.jetbrains.intellij.platform.settings` in `settings.gradle.kts`),
+  Kotlin 2.0.21 → 2.1.20, Kover 0.8.3 → 0.9.8, Changelog 2.2.1 → 2.5.0, mockk 1.13.12 → 1.14.9,
+  JDK 17 → 21.
+- **IDE floor raised to 2025.2.6.1.** Dropped `pluginSinceBuild` / `pluginUntilBuild` / platform
+  version parameterization from `gradle.properties`; the plugin now targets exactly the IDE
+  version declared via `intellijIdea("2025.2.6.1")` in `build.gradle.kts`.
+- **MCP Server is now a required dependency** (`<depends>com.intellij.mcpServer</depends>`).
+  Merged the former optional descriptor into `plugin.xml`; deleted the compile-time stubs
+  (`com.intellij.mcpserver.*`) and the `isMcpServerPluginAvailable()` presence helper — users on
+  2025.2+ always have MCP. The settings dialog unconditionally enables the MCP toggle.
+- **JUnit 4 replaces JUnit 5** throughout the test suite (matching the template). 18 test files
+  converted; `@Nested` classes flattened to method-name-prefixed tests.
+- **CI pipeline rewritten** to mirror the template: `ci.yml` replaced with sequential
+  `build.yml` (`build → test → verify`, parallel `coverage`) + a separate
+  `workflow_dispatch`-triggered `run-ui-tests.yml` matrixed across Ubuntu / Windows / macOS.
+  Every job opens with `jlumbroso/free-disk-space@v1.3.1`. Action versions now:
+  `actions/checkout@v6`, `actions/setup-java@v5` (Zulu / JDK 21),
+  `gradle/actions/setup-gradle@v6`, `actions/upload-artifact@v7`.
+- `LocalReviewToolset` migrated from the removed `ProjectContextElement` API to the current
+  `com.intellij.mcpserver.project` extension on the coroutine context.
+- `GitBranchListener` now takes an injectable `refresh: (Project) -> Unit` so tests drive the
+  refresh count through a lambda instead of `mockkObject(SafeRefresh)`.
+- Extracted a narrow `ReviewState` interface from `ReviewStateService` so MCP-logic unit tests
+  can exercise the code through a plain-Kotlin `FakeReviewState` — mockk's inline instrumentation
+  no longer collides with the IDE's coroutines-debug javaagent on 2025.2+.
+
+### Fixed
+
+- Remote Robot UI smoke test: added `--add-opens java.base/java.lang=ALL-UNNAMED` to the
+  `uiTest` JVM args so Gson can deserialize `RetrieveResponse.detailMessage` on JDK 17+.
+
 ## [0.2.1]
 
 ### Fixed

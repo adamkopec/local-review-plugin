@@ -1,9 +1,9 @@
 package pl.archiprogram.localreview.mcp
 
 import com.intellij.mcpserver.McpToolset
-import com.intellij.mcpserver.ProjectContextElement
 import com.intellij.mcpserver.annotations.McpDescription
 import com.intellij.mcpserver.annotations.McpTool
+import com.intellij.mcpserver.project
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.currentCoroutineContext
@@ -11,24 +11,18 @@ import pl.archiprogram.localreview.ui.SafeRefresh
 
 /**
  * MCP toolset exposing Local Review's viewed-state to external AI agents via the bundled
- * IntelliJ MCP Server (com.intellij.mcpServer, bundled since IDE 2025.2).
- *
- * Loaded conditionally via `pl.archiprogram.localreview-mcp.xml` — this package must stay
- * unreferenced from the main `plugin.xml` so classloading works on IDEs without MCP.
+ * IntelliJ MCP Server (com.intellij.mcpServer).
  *
  * Each tool:
  *  - checks [mcpToolsEnabled] first and throws via [noToolPermitted] if the user disabled the
  *    integration in Settings → Tools → Local Review;
  *  - resolves the current project from the coroutine context (the bundled MCP infrastructure
- *    sets [ProjectContextElement] before dispatching);
+ *    populates the project extension before dispatching);
  *  - wraps the real work in a [ReadAction] since it touches VCS and VFS state.
  *
  * Tools return plain [String]s — list-shaped results are minimal JSON so agents can parse them
  * deterministically. The `internal` logic functions in LocalReviewMcpLogic are directly
  * unit-tested so we don't need a running platform / coroutine infrastructure in most tests.
- *
- * The `com.intellij.mcpserver.*` classes resolve to compile-only stubs at build time (see
- * `src/mcpStubs/`) and to the bundled MCP plugin's real classes at runtime on 2025.2+.
  */
 class LocalReviewToolset : McpToolset {
 
@@ -121,10 +115,7 @@ class LocalReviewToolset : McpToolset {
         return result
     }
 
-    private suspend fun currentProject(): Project =
-        currentCoroutineContext()[ProjectContextElement.Key]?.project
-            ?: error("No ProjectContextElement in the current coroutine context. Local Review " +
-                "MCP tools must be invoked by an MCP client through a running IDE session.")
+    private suspend fun currentProject(): Project = currentCoroutineContext().project
 }
 
 /**

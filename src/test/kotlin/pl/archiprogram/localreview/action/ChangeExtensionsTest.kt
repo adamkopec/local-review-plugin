@@ -8,10 +8,10 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
 import io.mockk.unmockkAll
-import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNull
-import org.junit.jupiter.api.Test
+import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
+import org.junit.Test
 import pl.archiprogram.localreview.hash.ContentHasher
 
 /**
@@ -24,7 +24,7 @@ import pl.archiprogram.localreview.hash.ContentHasher
  */
 class ChangeExtensionsTest {
 
-    @AfterEach
+    @After
     fun tearDown() {
         unmockkAll()
     }

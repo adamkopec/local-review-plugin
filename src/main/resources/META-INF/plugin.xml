@@ -10,8 +10,12 @@
 
     <depends>com.intellij.modules.platform</depends>
     <depends>com.intellij.modules.vcs</depends>
-    <depends optional="true" config-file="pl.archiprogram.localreview-git.xml">Git4Idea</depends>
-    <depends optional="true" config-file="pl.archiprogram.localreview-mcp.xml">com.intellij.mcpServer</depends>
+    <depends>Git4Idea</depends>
+    <depends>com.intellij.mcpServer</depends>
+
+    <extensions defaultExtensionNs="com.intellij.mcpServer">
+        <mcpToolset implementation="pl.archiprogram.localreview.mcp.LocalReviewToolset"/>
+    </extensions>
 
     <extensions defaultExtensionNs="com.intellij">
         <applicationService serviceImplementation="pl.archiprogram.localreview.hash.ContentHasher"/>
@@ -51,6 +55,8 @@
     <projectListeners>
         <listener class="pl.archiprogram.localreview.vcs.ChangeSetListener"
                   topic="com.intellij.openapi.vcs.changes.ChangeListListener"/>
+        <listener class="pl.archiprogram.localreview.vcs.GitBranchListener"
+                  topic="git4idea.repo.GitRepositoryChangeListener"/>
     </projectListeners>
 
     <actions resource-bundle="messages.LocalReviewBundle">

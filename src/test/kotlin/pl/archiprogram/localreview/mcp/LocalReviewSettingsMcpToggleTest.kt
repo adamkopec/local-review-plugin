@@ -1,9 +1,9 @@
 package pl.archiprogram.localreview.mcp
 
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.Test
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
+import org.junit.Test
 import pl.archiprogram.localreview.settings.LocalReviewSettings
 
 /**
@@ -14,8 +14,8 @@ class LocalReviewSettingsMcpToggleTest {
 
     @Test fun default_state_has_mcp_tools_enabled() {
         assertTrue(
-            LocalReviewSettings.State().enableMcpTools,
             "MCP tools must default to ON; changing this requires a conscious user decision.",
+            LocalReviewSettings.State().enableMcpTools,
         )
     }
 

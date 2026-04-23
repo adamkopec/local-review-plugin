@@ -12,12 +12,11 @@ import io.mockk.mockk
 import io.mockk.mockkObject
 import io.mockk.mockkStatic
 import io.mockk.unmockkAll
-import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertInstanceOf
-import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Test
+import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.junit.Before
+import org.junit.Test
 import pl.archiprogram.localreview.state.Key
 import pl.archiprogram.localreview.vcs.KeyDeriver
 
@@ -26,7 +25,7 @@ class TargetCollectorTest {
     private val project: Project = mockk(relaxed = true)
     private val clm: ChangeListManager = mockk(relaxed = true)
 
-    @BeforeEach
+    @Before
     fun setUp() {
         mockkStatic(ChangeListManager::class)
         every { ChangeListManager.getInstance(project) } returns clm
@@ -34,7 +33,7 @@ class TargetCollectorTest {
         mockkStatic(VcsUtil::class)
     }
 
-    @AfterEach
+    @After
     fun tearDown() {
         unmockkAll()
     }
@@ -48,7 +47,7 @@ class TargetCollectorTest {
         val out = TargetCollector.collect(project, arrayOf(change), null, emptyList())
 
         assertEquals(1, out.size)
-        assertInstanceOf(Target.Changed::class.java, out[0])
+        assertTrue(out[0] is Target.Changed)
         assertEquals(key, out[0].key)
     }
 
@@ -60,7 +59,7 @@ class TargetCollectorTest {
         val out = TargetCollector.collect(project, null, listOf(fp), emptyList())
 
         assertEquals(1, out.size)
-        assertInstanceOf(Target.Unversioned::class.java, out[0])
+        assertTrue(out[0] is Target.Unversioned)
     }
 
     @Test fun collect_dedupsByKey_whenSameFileAppearsInMultipleSources() {
@@ -88,7 +87,7 @@ class TargetCollectorTest {
         val out = TargetCollector.collect(project, null, null, listOf(vf))
 
         assertEquals(1, out.size)
-        assertInstanceOf(Target.Changed::class.java, out[0])
+        assertTrue(out[0] is Target.Changed)
     }
 
     @Test fun collect_fromVirtualFileSelection_unversioned_producesUnversionedTarget() {
@@ -103,7 +102,7 @@ class TargetCollectorTest {
         val out = TargetCollector.collect(project, null, null, listOf(vf))
 
         assertEquals(1, out.size)
-        assertInstanceOf(Target.Unversioned::class.java, out[0])
+        assertTrue(out[0] is Target.Unversioned)
     }
 
     @Test fun collect_fromVirtualFileSelection_notAChange_filteredOut() {
