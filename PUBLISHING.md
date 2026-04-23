@@ -34,33 +34,39 @@ Before the very first release:
 
    (This task is provided by the `org.jetbrains.changelog` Gradle plugin and
    writes the release date automatically. Review the diff before committing.)
-3. Bump `pluginVersion` in `gradle.properties`.
+3. Bump `pluginVersion` in `gradle.properties`. **It must match the tag
+   exactly** — the release workflow fails the build otherwise.
 4. Commit + tag the release:
 
    ```
    git commit -am "Release 0.X.Y"
-   git tag v0.X.Y
+   git tag 0.X.Y             # no "v" prefix — matches the existing tag history
    git push --follow-tags
    ```
 
-5. Run the local verifier (catches most compatibility breakages before upload):
+   Pushing the tag triggers `.github/workflows/release.yml`, which runs
+   `check` → `verifyPlugin` → `buildPlugin` → `publishPlugin` on the tagged
+   commit and then creates a GitHub Release with the zip attached and the
+   CHANGELOG section for that version as the body.
 
-   ```
-   ./gradlew verifyPlugin
-   ```
+   Non-stable versions (e.g. `0.3.1-beta.1`) match the second tag pattern in
+   the workflow and go to a matching channel; stable versions go to the
+   default channel. The channel routing is configured in `build.gradle.kts` →
+   `intellijPlatform.publishing.channels`.
 
-6. Build and upload:
+### Manual fallback
 
-   ```
-   export PUBLISH_TOKEN=...
-   # optional, only if you configured signing:
-   # export CERTIFICATE_CHAIN=... PRIVATE_KEY=... PRIVATE_KEY_PASSWORD=...
-   ./gradlew publishPlugin
-   ```
+If the workflow is down or you need to publish from a branch that isn't
+tagged (e.g. a one-off re-upload of the same version to a different channel),
+run the same chain locally:
 
-   Non-stable versions (e.g. `0.2.0-beta.1`) automatically go to a matching
-   channel; stable versions go to the default channel. The channel routing is
-   configured in `build.gradle.kts` → `intellijPlatform.publishing.channels`.
+```
+./gradlew check verifyPlugin buildPlugin
+export PUBLISH_TOKEN=...
+# optional, only if you configured signing:
+# export CERTIFICATE_CHAIN=... PRIVATE_KEY=... PRIVATE_KEY_PASSWORD=...
+./gradlew publishPlugin
+```
 
 ## Per-release: Marketplace admin-panel side
 
