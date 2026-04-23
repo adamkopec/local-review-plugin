@@ -1,11 +1,32 @@
 # Local Review — Changelog
 
 All notable changes to this project are documented in this file.
-
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [0.4.1] - 2026-04-23
+
+### Changed
+
+- Migrated all 9 `com.intellij.openapi.application.runReadAction { ... }` call sites off
+  the top-level Kotlin helper. It carries a `/** Use [readAction]. */` hint on `252` /
+  `253`, and upstream `master` now formally `@Deprecated`s it with
+  `"Use ReadAction.nonBlocking or runReadActionBlocking (for explicitly non-cancellable
+  read actions)"` — the IDE's "Deprecated methods usages" inspection was already firing
+  8 times. Site-by-site replacement per the upstream `@see` guidance:
+    - **Suspend contexts** (`mcp.LocalReviewToolset`): `readAction { }` for the pure
+      `local_review_list_changes` read; `readActionBlocking { }` for the two list-and-mark
+      tools (`local_review_mark_all_viewed`, `local_review_mark_files`) — cancelling
+      mid-loop would leave `service.mark` side-effects on the aborted attempt and
+      under-report the returned `Int` count, so WBRA is the correct choice there.
+    - **Pool-thread call sites** (6 sites in `ContentChangeListener`, `ToggleViewedAction`,
+      `MarkAllViewedAction`, `ChangeSetListener`, `ReviewStartupActivity`):
+      `ReadAction.nonBlocking<T> { ... }.executeSynchronously()` — same WARA semantics
+      (cancel-and-retry on concurrent write action) as suspend `readAction`, no coroutine
+      context required. All wrapped reads (key derivation, content hashing, changeset
+      scanning) are already idempotent, so retry is safe.
 
 ## [0.4.0] - 2026-04-23
 
@@ -180,3 +201,12 @@ IDE is now **IntelliJ 2025.2.6.1** — older 2024.x versions are no longer suppo
 - Rename detection via `ChangeListManager` — marks follow the new path.
 - Optional Git4Idea integration for branch-scoped state; graceful fallback to
   a `<no-branch>` sentinel when Git isn't available (SVN, standalone projects).
+
+[Unreleased]: https://github.com/adam-kopec/local-review/compare/v0.4.1...HEAD
+[0.4.1]: https://github.com/adam-kopec/local-review/compare/v0.4.0...v0.4.1
+[0.4.0]: https://github.com/adam-kopec/local-review/compare/v0.3.1...v0.4.0
+[0.3.1]: https://github.com/adam-kopec/local-review/compare/v0.3.0...v0.3.1
+[0.3.0]: https://github.com/adam-kopec/local-review/compare/v0.2.1...v0.3.0
+[0.2.1]: https://github.com/adam-kopec/local-review/compare/v0.2.0...v0.2.1
+[0.2.0]: https://github.com/adam-kopec/local-review/compare/v0.1.0...v0.2.0
+[0.1.0]: https://github.com/adam-kopec/local-review/commits/v0.1.0
