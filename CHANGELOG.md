@@ -7,6 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-04-23
+
+### Fixed
+
+- Reviewed marks on unversioned files were being silently dropped on the first
+  `ChangeListManager` update after marking. `ChangeSetScanner.scan` only walked
+  `clm.allChanges` when building `currentChanges`, so an unversioned key was never in the
+  set; `ReviewStateService.reconcile` step 2 then iterated and removed every viewed entry
+  missing from `currentChanges`. Fixed by also ingesting `clm.unversionedFilesPaths`. The
+  same bug also affected `ReviewStartupActivity.reconcileInitial` (which had its own
+  inline copy of the logic) — folded it into the scanner so both paths share one
+  canonical changeset definition. Added four scanner regression tests.
+
+### Changed
+
+- Converted all 9 `ReadAction.compute(ThrowableComputable)` / `ReadAction.run(ThrowableRunnable)`
+  call sites to the non-deprecated Kotlin `runReadAction { ... }`. The JetBrains External
+  Plugins Checker was reporting these as "Deprecated methods usages" on every upload.
+- `intellijPlatform.pluginVerification.failureLevel` now also includes
+  `DEPRECATED_API_USAGES` and `SCHEDULED_FOR_REMOVAL_API_USAGES`, so the local
+  `./gradlew verifyPlugin` gate catches platform-API deprecations before they reach the
+  marketplace verifier.
+- Added ktlint (`org.jlleitschuh.gradle.ktlint` 12.1.1) as the project-wide Kotlin linter.
+  Hooks into `check` automatically; use `./gradlew ktlintFormat` to auto-fix style drift.
+  A `.editorconfig` at the repo root carves out the `function-naming` rule for
+  `@McpTool`-annotated functions (the platform binds tool names to declared function names,
+  so `local_review_list_changes` etc. must stay snake_case). Every other function in the
+  codebase — tests included — is now camelCase; ~150 test function names renamed.
+- `.github/workflows/release.yml` added: publishes to JetBrains Marketplace and creates a
+  GitHub Release when a `X.Y.Z[-suffix]` tag is pushed, gated on `check`, `verifyPlugin`,
+  and a tag-vs-pluginVersion consistency check.
+
 ## [0.3.1] - 2026-04-23
 
 ### Fixed
