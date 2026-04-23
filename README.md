@@ -89,6 +89,31 @@ integration under **Settings → Tools → Local Review** at any time.
 Server plugin after Local Review, the tools become discoverable without further
 configuration. Flip the checkbox off if you'd rather opt in explicitly.
 
+### Connecting Claude Code
+
+Installing the MCP Server plugin inside the IDE only runs the *server* side —
+Claude Code still needs a client-side entry to reach it, even when you launch
+Claude from the official IntelliJ Claude Code plugin. Anthropic's plugin ships
+its own lightweight `ide` bridge (diagnostics only) and does not auto-wire
+itself to the JetBrains MCP Server, so Local Review's tools won't appear until
+you connect the two explicitly.
+
+The one-click path — **recommended**:
+
+1. In IntelliJ, open **Settings → Tools → MCP Server**.
+2. Find **Claude Code** in the clients list and click **Configure**.
+3. Approve the access prompt. The plugin adds an `sse` entry under
+   `mcpServers.idea` in `~/.claude.json`, pointing at the IDE's local MCP
+   endpoint (e.g. `http://127.0.0.1:<port>/sse`).
+4. In your Claude Code session, run `/mcp` to reload (or start a new session).
+   The `mcp__idea__local_review_*` tools should now appear alongside the rest
+   of the JetBrains toolset.
+
+If you prefer editing config by hand, open the same Settings panel to read the
+active SSE URL, then add an equivalent `sse` entry to `~/.claude.json`
+yourself. The URL's port changes per IDE restart, so the auto-config button is
+the maintenance-free option.
+
 ## Development
 
 ```
