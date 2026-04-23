@@ -5,12 +5,12 @@ Commit / Local Changes view, with automatic invalidation when a file changes aft
 being marked.
 
 <!-- Plugin description -->
-**Local Review** brings GitHub's “Viewed” checkbox to IntelliJ's Commit / Local Changes
+Local Review brings GitHub's "Viewed" checkbox to IntelliJ's Commit / Local Changes
 view — so you can keep track of which files in your working tree you've already reviewed.
 
 It's designed for reviewing AI-generated, auto-refactored, or machine-edited code
 locally: mark a file reviewed, and if a tool touches it again the mark drops. On
-IntelliJ 2025.2+ the agent can even drive the state via MCP — *“mark these files reviewed.”*
+IntelliJ 2025.2+ the agent can even drive the state via MCP — *"mark these files reviewed."*
 
 **Features**
 
