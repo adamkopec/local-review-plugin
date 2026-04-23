@@ -41,6 +41,7 @@ class ChangeSetListener(private val project: Project) : ChangeListListener {
                 ChangeSetScanner.scan(
                     project = project,
                     changes = clm.allChanges,
+                    unversionedPaths = clm.unversionedFilesPaths,
                     isViewed = service::isViewed,
                     hasher = hasher,
                 )
