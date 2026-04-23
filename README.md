@@ -25,15 +25,15 @@ IntelliJ 2025.2+ the agent can even drive the state via MCP — *"mark these fil
 - Configurable TTL and per-branch cap keep state bounded.
 - Works across the IntelliJ Platform: IDEA, PyCharm, WebStorm, GoLand, Android Studio, ...
 
+**Source and issues:** [github.com/adam-kopec/local-review](https://github.com/adam-kopec/local-review)
+<!-- Plugin description end -->
+
 **Getting started**
 
 Install the plugin, open any project with a Git working tree, then open the Commit
 tool window. Right-click any changed or unversioned file and pick **Mark as Reviewed**,
 or press `Ctrl+Alt+Shift+V` (`⌘⌥⇧V` on macOS). Edit the file later and the mark drops
 automatically. Configure retention and cap under **Settings → Tools → Local Review**.
-
-**Source and issues:** [github.com/adam-kopec/local-review](https://github.com/adam-kopec/local-review)
-<!-- Plugin description end -->
 
 ## Installation
 
