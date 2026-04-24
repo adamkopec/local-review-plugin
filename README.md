@@ -25,7 +25,7 @@ IntelliJ 2025.2+ the agent can even drive the state via MCP — *"mark these fil
 - Configurable TTL and per-branch cap keep state bounded.
 - Works across the IntelliJ Platform: IDEA, PyCharm, WebStorm, GoLand, Android Studio, ...
 
-**Source and issues:** [github.com/adam-kopec/local-review](https://github.com/adam-kopec/local-review)
+**Source and issues:** [github.com/adamkopec/local-review-plugin](https://github.com/adamkopec/local-review-plugin)
 <!-- Plugin description end -->
 
 **Getting started**
@@ -37,9 +37,14 @@ automatically. Configure retention and cap under **Settings → Tools → Local 
 
 ## Installation
 
-_(Pending first release to JetBrains Marketplace.)_
+Install from the JetBrains Marketplace:
 
-Until then, build locally:
+- In the IDE, open **Settings → Plugins → Marketplace**, search for
+  **Local Review**, and click **Install**.
+- Or visit the listing directly:
+  <https://plugins.jetbrains.com/plugin/31415-local-review>.
+
+### Install from source
 
 ```
 ./gradlew buildPlugin
@@ -57,7 +62,7 @@ The plugin zip lands in `build/distributions/`. Install it via
 Under **Settings → Tools → Local Review**:
 
 - TTL (days) — forget reviewed marks older than this.
-- Per-branch cap — evict oldest marks when a branch exceeds it.
+- Per-branch cap — evict the oldest marks when a branch exceeds it.
 - Enable debug logging (restart required).
 - Expose "viewed" tools to MCP-connected AI agents (see below). Grayed out when
   the MCP Server plugin isn't installed.
@@ -151,11 +156,11 @@ Two layers of regression coverage:
    application service is instantiable, and the bundle strings render correctly.
    Extend `src/uiTest/kotlin/.../LocalReviewUiSmokeTest.kt` for richer flows.
 
-   CI runs these too — see the `ui-tests` job in `.github/workflows/ci.yml`. It
-   installs Xvfb, launches the IDE in the background, waits for the Robot port
-   to become reachable, runs the tests, and uploads the IDE log + any screenshots
-   on failure. The job is marked `continue-on-error: true` so UI flakiness doesn't
-   block merges — flip that off once the suite stabilises.
+   `.github/workflows/run-ui-tests.yml` runs the same flow on Linux, Windows,
+   and macOS — **manual trigger only** (`workflow_dispatch`), not on every push.
+   On Linux it wraps the IDE in Xvfb; all three legs wait for the Robot port
+   to become reachable, then run `./gradlew uiTest` and upload
+   `build/reports/tests/uiTest/` as an artifact.
 
 ## Publishing
 
