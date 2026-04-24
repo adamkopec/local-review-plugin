@@ -6,6 +6,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.2] - 2026-04-24
+
+### Changed
+
+- `.github/workflows/release.yml`: bumped `softprops/action-gh-release` from `@v2` to `@v3`.
+  The v2 release runs on Node.js 20, which GitHub is retiring on the Actions runners
+  (forced to Node.js 24 on 2026-06-02, removed entirely on 2026-09-16). v3.0.0
+  (2026-04-12) migrates the runtime to Node.js 24 — bumping the action major is
+  preferred over opting into `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true`.
+- Documentation refresh now that the plugin is live on the JetBrains Marketplace:
+    - `README.md` Installation section points at
+      <https://plugins.jetbrains.com/plugin/31415-local-review> as the primary
+      install path; the "build locally" instructions moved under an **Install from
+      source** subsection.
+    - `README.md` UI-tests paragraph fixed: names the actual workflow file
+      (`.github/workflows/run-ui-tests.yml`), flags it as `workflow_dispatch`-only,
+      scopes Xvfb to the Linux matrix leg, and drops the stale
+      `continue-on-error: true` sentence (no longer present in the workflow).
+    - `PUBLISHING.md` reworked for post-first-release state: added a pointer to the
+      live listing, archived the one-time-setup checklist (plugin name availability,
+      developer account, etc. are now historical), and reframed the admin-panel
+      section as "open the existing listing" rather than "after the first upload."
+- `.gitignore`: ignore `.kotlin/` (Kotlin compiler error log directory).
+
 ## [0.4.1] - 2026-04-23
 
 ### Changed
@@ -202,7 +226,8 @@ IDE is now **IntelliJ 2025.2.6.1** — older 2024.x versions are no longer suppo
 - Optional Git4Idea integration for branch-scoped state; graceful fallback to
   a `<no-branch>` sentinel when Git isn't available (SVN, standalone projects).
 
-[Unreleased]: https://github.com/adam-kopec/local-review/compare/v0.4.1...HEAD
+[Unreleased]: https://github.com/adam-kopec/local-review/compare/v0.4.2...HEAD
+[0.4.2]: https://github.com/adam-kopec/local-review/compare/v0.4.1...v0.4.2
 [0.4.1]: https://github.com/adam-kopec/local-review/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/adam-kopec/local-review/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/adam-kopec/local-review/compare/v0.3.0...v0.3.1
