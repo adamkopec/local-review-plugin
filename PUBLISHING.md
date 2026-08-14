@@ -12,17 +12,17 @@ under <https://plugins.jetbrains.com/author/me/plugins>.
 ## Per-release: repo side
 
 1. Make sure all work for the release is merged into `main`.
-2. Move the `[Unreleased]` section of `CHANGELOG.md` into a new versioned entry:
+2. Bump `pluginVersion` in `gradle.properties` to the new release version
+3. Move the `[Unreleased]` section of `CHANGELOG.md` into a new versioned entry:
 
    ```
    ./gradlew patchChangelog
    ```
 
    (This task is provided by the `org.jetbrains.changelog` Gradle plugin and
-   writes the release date automatically. Review the diff before committing.)
-3. Bump `pluginVersion` in `gradle.properties`. **It must match the tag
-   exactly** — the release workflow fails the build otherwise.
-4. Commit + tag the release:
+   writes the release date automatically. Review the diff before committing
+4. Commit + tag the release. The tag **must match `pluginVersion` exactly** —
+   the release workflow fails the build otherwise.
 
    ```
    git commit -am "Release 0.X.Y"

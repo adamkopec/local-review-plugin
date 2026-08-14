@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-08-14
+
 ### Fixed
 
 - `ReviewStateService.reconcile()`: a reviewed file could be silently unreviewed by staging or
@@ -248,7 +250,8 @@ IDE is now **IntelliJ 2025.2.6.1** — older 2024.x versions are no longer suppo
 - Optional Git4Idea integration for branch-scoped state; graceful fallback to
   a `<no-branch>` sentinel when Git isn't available (SVN, standalone projects).
 
-[Unreleased]: https://github.com/adam-kopec/local-review/compare/v0.4.2...HEAD
+[Unreleased]: https://github.com/adam-kopec/local-review/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/adam-kopec/local-review/compare/v0.4.2...v0.5.0
 [0.4.2]: https://github.com/adam-kopec/local-review/compare/v0.4.1...v0.4.2
 [0.4.1]: https://github.com/adam-kopec/local-review/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/adam-kopec/local-review/compare/v0.3.1...v0.4.0
