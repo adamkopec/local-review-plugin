@@ -26,7 +26,10 @@ import java.io.File
  */
 object PathResolver {
     sealed class Outcome {
-        data class Resolved(val file: VirtualFile, val key: Key) : Outcome()
+        data class Resolved(
+            val file: VirtualFile,
+            val key: Key,
+        ) : Outcome()
 
         object NotFound : Outcome()
 

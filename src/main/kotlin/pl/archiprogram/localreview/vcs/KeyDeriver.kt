@@ -37,7 +37,8 @@ object KeyDeriver {
         if (vf != null) return keyFor(project, vf)
 
         val vcsRoot =
-            ProjectLevelVcsManager.getInstance(project)
+            ProjectLevelVcsManager
+                .getInstance(project)
                 .getVcsRootFor(filePath) ?: return null
         val branch =
             try {

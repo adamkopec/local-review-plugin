@@ -23,7 +23,9 @@ import pl.archiprogram.localreview.ui.SafeRefresh
  * Skips auto-invalidation for files in [FileStatus.MERGED_WITH_CONFLICTS]; those are handled
  * through the normal edit → invalidate path once the user resolves the conflict.
  */
-class ChangeSetListener(private val project: Project) : ChangeListListener {
+class ChangeSetListener(
+    private val project: Project,
+) : ChangeListListener {
     override fun changeListUpdateDone() {
         AppExecutorUtil.getAppExecutorService().submit { reconcile() }
     }
@@ -36,15 +38,16 @@ class ChangeSetListener(private val project: Project) : ChangeListListener {
 
         val result =
             try {
-                ReadAction.nonBlocking<ChangeSetScanner.Result> {
-                    ChangeSetScanner.scan(
-                        project = project,
-                        changes = clm.allChanges,
-                        unversionedPaths = clm.unversionedFilesPaths,
-                        isViewed = service::isViewed,
-                        hasher = hasher,
-                    )
-                }.executeSynchronously()
+                ReadAction
+                    .nonBlocking<ChangeSetScanner.Result> {
+                        ChangeSetScanner.scan(
+                            project = project,
+                            changes = clm.allChanges,
+                            unversionedPaths = clm.unversionedFilesPaths,
+                            isViewed = service::isViewed,
+                            hasher = hasher,
+                        )
+                    }.executeSynchronously()
             } catch (e: Exception) {
                 LOG.warn("Reconcile failed: ${e.message}", e)
                 return

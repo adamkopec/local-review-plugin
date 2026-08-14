@@ -2,6 +2,7 @@ package pl.archiprogram.localreview.ui
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.changes.ChangeListListener
 import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.StatusBarWidget
@@ -12,7 +13,10 @@ import pl.archiprogram.localreview.state.ReviewStateService
 import pl.archiprogram.localreview.vcs.BranchProvider
 import pl.archiprogram.localreview.vcs.ReviewBreakdown
 
-class CounterWidget(private val project: Project) : StatusBarWidget, StatusBarWidget.TextPresentation {
+class CounterWidget(
+    private val project: Project,
+) : StatusBarWidget,
+    StatusBarWidget.TextPresentation {
     private var statusBar: StatusBar? = null
     private var connection: MessageBusConnection? = null
 
@@ -65,7 +69,7 @@ class CounterWidget(private val project: Project) : StatusBarWidget, StatusBarWi
     }
 
     private fun primaryBranch(): String? {
-        val mgr = com.intellij.openapi.vcs.ProjectLevelVcsManager.getInstance(project)
+        val mgr = ProjectLevelVcsManager.getInstance(project)
         val roots = mgr.allVcsRoots
         if (roots.isEmpty()) return null
         val provider = BranchProvider.getInstance()

@@ -3,6 +3,7 @@ package pl.archiprogram.localreview.ui
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.changes.ChangeListListener
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
 import com.intellij.openapi.wm.ToolWindowManager
@@ -53,8 +54,8 @@ class CommitViewRendererInstaller : ProjectActivity {
 
     companion object {
         private val LOG = Logger.getInstance(CommitViewRendererInstaller::class.java)
-        private val MARKER = com.intellij.openapi.util.Key.create<Boolean>("pl.archiprogram.localreview.renderer.installed")
-        private val TREES_KEY = com.intellij.openapi.util.Key.create<MutableList<JTree>>("pl.archiprogram.localreview.trees")
+        private val MARKER = Key.create<Boolean>("pl.archiprogram.localreview.renderer.installed")
+        private val TREES_KEY = Key.create<MutableList<JTree>>("pl.archiprogram.localreview.trees")
 
         private fun scheduleInstall(project: Project) {
             AppExecutorUtil.getAppExecutorService().submit {

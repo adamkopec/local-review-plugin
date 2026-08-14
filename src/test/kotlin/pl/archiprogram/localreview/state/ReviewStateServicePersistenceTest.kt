@@ -103,7 +103,6 @@ class ReviewStateServicePersistenceTest : BasePlatformTestCase() {
         service.mark(keep, "h1", 1L)
         service.mark(drop, "h2", 2L)
 
-        // First miss: only starts the grace clock, doesn't evict yet.
         service.reconcile(
             currentChanges = setOf(keep),
             renames = emptyMap(),
@@ -113,7 +112,6 @@ class ReviewStateServicePersistenceTest : BasePlatformTestCase() {
         )
         assertTrue("a single missing snapshot must not evict immediately", service.isViewed(drop))
 
-        // Still missing after the grace window: now it's evicted.
         service.reconcile(
             currentChanges = setOf(keep),
             renames = emptyMap(),
@@ -127,9 +125,6 @@ class ReviewStateServicePersistenceTest : BasePlatformTestCase() {
     }
 
     fun testReconcileMissingEntrySurvivesTransientGapShorterThanGrace() {
-        // Regression: an external `git add`/`git reset` can make ChangeListManager report a file
-        // as absent from both `allChanges` and `unversionedFilesPaths` for one or more transient
-        // refresh passes before it settles. A single miss must not permanently drop the mark.
         val key = Key("/r", "m", "/r/staged.txt")
         service.mark(key, "h", now = 0L)
 
@@ -142,8 +137,6 @@ class ReviewStateServicePersistenceTest : BasePlatformTestCase() {
         )
         assertTrue("transient absence must not evict", service.isViewed(key))
 
-        // CLM settles: the file reappears (now correctly categorized) before the grace window
-        // elapses, so the pending eviction must be cancelled.
         service.reconcile(
             currentChanges = setOf(key),
             renames = emptyMap(),
@@ -153,7 +146,6 @@ class ReviewStateServicePersistenceTest : BasePlatformTestCase() {
         )
         assertTrue(service.isViewed(key))
 
-        // A later miss must start a fresh grace window rather than reusing the stale timestamp.
         service.reconcile(
             currentChanges = emptySet(),
             renames = emptyMap(),

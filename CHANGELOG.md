@@ -18,6 +18,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   repeated reconciles before evicting, so a transient gap no longer destroys real marks while
   genuinely-gone entries (committed, reverted, deleted) still get cleaned up.
 
+### Changed
+
+- `org.jetbrains.kotlinx.kover` `0.9.8` → `0.9.9`.
+- `org.jlleitschuh.gradle.ktlint` `12.1.1` → `14.2.0`, and reformatted the codebase to the
+  newer ruleset (`standard:class-signature`, `standard:chain-method-continuation`).
+- `io.mockk:mockk` (test) `1.13.12` → `1.14.3`.
+- `.github/workflows/run-ui-tests.yml`: `jtalk/url-health-check-action` `@v4` → `@v5`, moving
+  it off the Node.js runtime GitHub is retiring — same class of fix already applied to
+  `softprops/action-gh-release` in 0.4.2.
+
 ## [0.4.2] - 2026-04-24
 
 ### Changed

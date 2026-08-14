@@ -10,7 +10,9 @@ import pl.archiprogram.localreview.vcs.KeyDeriver
 import javax.swing.tree.DefaultTreeModel
 
 /** Value object used as group key so we don't clash with built-in policies that also use `String`. */
-data class ViewedBucket(val viewed: Boolean)
+data class ViewedBucket(
+    val viewed: Boolean,
+)
 
 class ViewedGroupingPolicy(
     private val project: Project,

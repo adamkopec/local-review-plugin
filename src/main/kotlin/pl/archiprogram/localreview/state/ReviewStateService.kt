@@ -7,6 +7,7 @@ import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.changes.ChangesViewModifier
 import com.intellij.util.messages.Topic
 import pl.archiprogram.localreview.settings.LocalReviewSettings
 import java.util.concurrent.locks.ReentrantReadWriteLock
@@ -16,8 +17,8 @@ import com.intellij.openapi.components.State as StateAnn
 
 /**
  * Narrow read/write surface that [pl.archiprogram.localreview.mcp.LocalReviewMcpLogic] depends on.
- * Extracted so tests can hand in a plain Kotlin fake instead of a mockk proxy — the IDE's
- * coroutines-debug javaagent conflicts with mockk's inline instrumentation on Kotlin final classes.
+ * Extracted so tests can substitute a plain Kotlin fake: the IDE's coroutines-debug javaagent
+ * conflicts with mockk's inline instrumentation on Kotlin final classes.
  */
 interface ReviewState {
     fun isViewed(key: Key): Boolean
@@ -44,7 +45,10 @@ interface ReviewState {
     name = "LocalReviewState",
     storages = [Storage(StoragePathMacros.CACHE_FILE)],
 )
-class ReviewStateService(private val project: Project) : PersistentStateComponent<State>, ReviewState {
+class ReviewStateService(
+    private val project: Project,
+) : PersistentStateComponent<State>,
+    ReviewState {
     interface Listener {
         fun stateChanged()
     }
@@ -54,12 +58,11 @@ class ReviewStateService(private val project: Project) : PersistentStateComponen
 
     /**
      * Key → wall-clock time it was first observed missing from a reconcile's `currentChanges`.
-     * `ChangeListManager`'s refresh is not atomic: an external git-index mutation (`git add`,
-     * `git reset`) can produce one or more transient snapshots where a file is in neither
-     * `allChanges` nor `unversionedFilesPaths` before CLM settles — git4idea's index-triggered
-     * repo update runs on its own async queue, decoupled from `VcsDirtyScopeManager`'s refresh.
-     * [reconcile] only evicts an entry once its absence has held for [MISSING_GRACE_MS]; entries
-     * that reappear before then are struck from this map instead of being dropped.
+     * `ChangeListManager`'s refresh is not atomic: a file can be absent from both `allChanges`
+     * and `unversionedFilesPaths` for one or more passes before CLM settles, since git4idea's
+     * index-triggered repo update runs on its own async queue, decoupled from
+     * `VcsDirtyScopeManager`. [reconcile] only evicts once an absence holds for
+     * [MISSING_GRACE_MS]; a key that reappears is struck from this map instead.
      */
     private val pendingRemoval: MutableMap<Key, Long> = HashMap()
 
@@ -197,9 +200,7 @@ class ReviewStateService(private val project: Project) : PersistentStateComponen
                 }
             }
 
-            // 2. Drop entries not backed by a current Change — but only once the absence has
-            // held for MISSING_GRACE_MS. See the `pendingRemoval` doc comment: a single missing
-            // snapshot can be a transient artifact of an in-flight CLM refresh, not a real drop.
+            // 2. Drop entries missing from currentChanges for MISSING_GRACE_MS (see pendingRemoval doc)
             for (key in entries.keys.toList()) {
                 if (key in currentChanges) {
                     pendingRemoval.remove(key)
@@ -252,8 +253,7 @@ class ReviewStateService(private val project: Project) : PersistentStateComponen
                 }
             }
 
-            // pendingRemoval must never outlive the entry it tracks (steps 3-5 above can drop
-            // entries without going through the key-by-key removal in step 2).
+            // Steps 3-5 can drop entries without going through step 2's removal.
             pendingRemoval.keys.retainAll(entries.keys)
         }
         if (changed) fireChanged()
@@ -302,7 +302,7 @@ class ReviewStateService(private val project: Project) : PersistentStateComponen
         // the "Reviewed (N)" synthetic group with the new contents.
         try {
             project.messageBus
-                .syncPublisher(com.intellij.openapi.vcs.changes.ChangesViewModifier.TOPIC)
+                .syncPublisher(ChangesViewModifier.TOPIC)
                 .updated()
         } catch (_: Throwable) {
             // TOPIC may not be available on some IDE flavors / future versions.
@@ -317,10 +317,8 @@ class ReviewStateService(private val project: Project) : PersistentStateComponen
 
         /**
          * How long a key must be continuously absent from `currentChanges` before [reconcile]
-         * evicts it. Observed real-world `ChangeListManager` convergence after an external
-         * `git add` / `git reset` took multiple refresh passes spanning ~2s; this leaves margin
-         * for slower machines/larger repos while staying invisible to the user (this is
-         * background bookkeeping, never a blocking operation).
+         * evicts it. Must exceed `ChangeListManager`'s worst-case multi-pass convergence time;
+         * this is background bookkeeping, so the extra latency isn't user-visible.
          */
         private const val MISSING_GRACE_MS: Long = 5_000L
 

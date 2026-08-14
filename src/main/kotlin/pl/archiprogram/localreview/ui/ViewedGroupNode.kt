@@ -6,7 +6,9 @@ import com.intellij.ui.SimpleTextAttributes
 import pl.archiprogram.localreview.Icons
 import pl.archiprogram.localreview.LocalReviewBundle
 
-class ViewedGroupNode(val viewed: Boolean) : ChangesBrowserNode<Boolean>(viewed) {
+class ViewedGroupNode(
+    val viewed: Boolean,
+) : ChangesBrowserNode<Boolean>(viewed) {
     override fun render(
         renderer: ChangesBrowserNodeRenderer,
         selected: Boolean,

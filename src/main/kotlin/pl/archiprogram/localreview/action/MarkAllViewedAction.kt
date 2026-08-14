@@ -37,9 +37,10 @@ class MarkAllViewedAction : AnAction() {
                     val key = change.key(project) ?: continue
                     if (service.isViewed(key)) continue
                     val hash =
-                        ReadAction.nonBlocking<String?> {
-                            if (project.isDisposed) null else change.hashAfter()
-                        }.executeSynchronously() ?: continue
+                        ReadAction
+                            .nonBlocking<String?> {
+                                if (project.isDisposed) null else change.hashAfter()
+                            }.executeSynchronously() ?: continue
                     service.mark(key, hash)
                 }
             } finally {

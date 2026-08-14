@@ -6,7 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 
 /**
- * Resolves the current branc                               h for a VCS root. Default implementation returns [BranchProvider.NO_BRANCH].
+ * Resolves the current branch for a VCS root. Default implementation returns [BranchProvider.NO_BRANCH].
  * The Git fragment registers an override that talks to Git4Idea.
  */
 interface BranchProvider {

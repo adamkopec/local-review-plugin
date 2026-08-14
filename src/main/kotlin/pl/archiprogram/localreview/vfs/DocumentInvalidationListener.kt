@@ -2,6 +2,7 @@ package pl.archiprogram.localreview.vfs
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -43,7 +44,8 @@ class DocumentInvalidationListener : DocumentListener {
 
         fun ensureInstalled() {
             if (installed.compareAndSet(false, true)) {
-                com.intellij.openapi.editor.EditorFactory.getInstance()
+                EditorFactory
+                    .getInstance()
                     .eventMulticaster
                     .addDocumentListener(
                         DocumentInvalidationListener(),

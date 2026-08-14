@@ -7,7 +7,7 @@ import org.jetbrains.intellij.platform.gradle.tasks.VerifyPluginTask.FailureLeve
 plugins {
     id("org.jetbrains.kotlin.jvm")
     id("org.jetbrains.intellij.platform")
-    id("org.jetbrains.kotlinx.kover") version "0.9.8"
+    id("org.jetbrains.kotlinx.kover") version "0.9.9"
     id("org.jetbrains.changelog")
     id("org.jlleitschuh.gradle.ktlint")
 }
@@ -26,7 +26,7 @@ dependencies {
     // The IntelliJ test framework ships its own kotlinx-coroutines fork (`*-intellij-N`) via
     // `com.jetbrains.intellij.platform:test-framework`; letting mockk/kotest pull vanilla
     // coroutines shadows `runBlockingWithParallelismCompensation` at runtime.
-    testImplementation("io.mockk:mockk:1.13.12") {
+    testImplementation("io.mockk:mockk:1.14.3") {
         exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-core")
         exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-core-jvm")
         exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-jdk8")

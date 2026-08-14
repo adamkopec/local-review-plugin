@@ -55,9 +55,10 @@ class LocalReviewToolsetTest {
 
     @Test fun declaresExactlyTheFiveExpectedToolNames() {
         val names =
-            toolAnnotatedFunctions(LocalReviewToolset::class).mapNotNull {
-                it.findAnnotation<McpTool>()?.name
-            }.toSet()
+            toolAnnotatedFunctions(LocalReviewToolset::class)
+                .mapNotNull {
+                    it.findAnnotation<McpTool>()?.name
+                }.toSet()
 
         assertEquals(
             "Tool name set is part of the user-prompt contract; changes must be deliberate.",

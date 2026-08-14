@@ -1,5 +1,6 @@
 package pl.archiprogram.localreview.ui
 
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.ChangesViewModifier
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
@@ -18,7 +19,9 @@ import pl.archiprogram.localreview.vcs.ReviewBreakdown
  * The ChangesViewModifier API only supports adding nodes, not decorating existing ones —
  * hence the duplication trade-off.
  */
-class ReviewedChangesViewModifier(private val project: Project) : ChangesViewModifier {
+class ReviewedChangesViewModifier(
+    private val project: Project,
+) : ChangesViewModifier {
     override fun modifyTreeModelBuilder(builder: ChangesViewModelBuilder) {
         if (project.isDisposed) return
         val breakdown = ReviewBreakdown.compute(project)
@@ -56,7 +59,7 @@ class ReviewedChangesViewModifier(private val project: Project) : ChangesViewMod
     }
 
     companion object {
-        private val LOG = com.intellij.openapi.diagnostic.Logger.getInstance(ReviewedChangesViewModifier::class.java)
+        private val LOG = Logger.getInstance(ReviewedChangesViewModifier::class.java)
     }
 }
 
@@ -97,7 +100,9 @@ class ReviewedRootNode(
     }
 }
 
-class ToReviewRootNode(private val remaining: Int) : ChangesBrowserNode<String>(LABEL) {
+class ToReviewRootNode(
+    private val remaining: Int,
+) : ChangesBrowserNode<String>(LABEL) {
     init {
         markAsHelperNode()
     }

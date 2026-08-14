@@ -1,5 +1,6 @@
 package pl.archiprogram.localreview.hash
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
@@ -48,7 +49,8 @@ class ContentHasher {
         modificationStamp: Long,
     ): String {
         val buf =
-            ByteBuffer.allocate(Long.SIZE_BYTES * 2)
+            ByteBuffer
+                .allocate(Long.SIZE_BYTES * 2)
                 .putLong(length)
                 .putLong(modificationStamp)
                 .array()
@@ -77,6 +79,9 @@ class ContentHasher {
         private val HEX = "0123456789abcdef".toCharArray()
         private val LOG = Logger.getInstance(ContentHasher::class.java)
 
-        fun getInstance(): ContentHasher = com.intellij.openapi.application.ApplicationManager.getApplication().service()
+        fun getInstance(): ContentHasher =
+            ApplicationManager
+                .getApplication()
+                .service()
     }
 }

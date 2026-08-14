@@ -7,7 +7,9 @@ import pl.archiprogram.localreview.vcs.BranchProvider
 import java.util.concurrent.atomic.AtomicLong
 
 /** Injectable clock. */
-class FakeClock(initial: Long = 1_700_000_000_000L) {
+class FakeClock(
+    initial: Long = 1_700_000_000_000L,
+) {
     private val t = AtomicLong(initial)
 
     fun now(): Long = t.get()

@@ -1,10 +1,12 @@
 package pl.archiprogram.localreview.ui
 
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.ui.JBColor
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
 import pl.archiprogram.localreview.state.Key
@@ -12,6 +14,7 @@ import pl.archiprogram.localreview.state.ReviewStateService
 import pl.archiprogram.localreview.vcs.KeyDeriver
 import java.awt.Component
 import java.awt.Container
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.JTree
 import javax.swing.tree.TreeCellRenderer
 
@@ -24,9 +27,9 @@ class ViewedCellRenderer(
     private val project: Project,
     private val delegate: TreeCellRenderer,
 ) : TreeCellRenderer {
-    private val loggedCall = java.util.concurrent.atomic.AtomicBoolean(false)
-    private val loggedLabel = java.util.concurrent.atomic.AtomicBoolean(false)
-    private val loggedDecorate = java.util.concurrent.atomic.AtomicBoolean(false)
+    private val loggedCall = AtomicBoolean(false)
+    private val loggedLabel = AtomicBoolean(false)
+    private val loggedDecorate = AtomicBoolean(false)
 
     override fun getTreeCellRendererComponent(
         tree: JTree,
@@ -69,7 +72,7 @@ class ViewedCellRenderer(
             val attrs =
                 SimpleTextAttributes(
                     SimpleTextAttributes.STYLE_BOLD,
-                    com.intellij.ui.JBColor(0x208A3C, 0x73BF78),
+                    JBColor(0x208A3C, 0x73BF78),
                 )
             label.append("   ✓", attrs)
         }
@@ -88,7 +91,7 @@ class ViewedCellRenderer(
     }
 
     companion object {
-        private val LOG = com.intellij.openapi.diagnostic.Logger.getInstance(ViewedCellRenderer::class.java)
+        private val LOG = Logger.getInstance(ViewedCellRenderer::class.java)
     }
 
     private fun keyFor(value: Any?): Key? {

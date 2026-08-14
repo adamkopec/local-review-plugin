@@ -78,9 +78,10 @@ class ToggleViewedAction : AnAction() {
                     for (t in targets) {
                         if (service.isViewed(t.key)) continue
                         val hash =
-                            ReadAction.nonBlocking<String?> {
-                                if (project.isDisposed) null else t.hash()
-                            }.executeSynchronously() ?: continue
+                            ReadAction
+                                .nonBlocking<String?> {
+                                    if (project.isDisposed) null else t.hash()
+                                }.executeSynchronously() ?: continue
                         service.mark(t.key, hash)
                     }
                 } finally {
@@ -115,13 +116,21 @@ internal sealed class Target {
 
     abstract fun hash(): String?
 
-    class Changed(private val project: Project, private val change: Change, override val key: Key) : Target() {
+    class Changed(
+        private val project: Project,
+        private val change: Change,
+        override val key: Key,
+    ) : Target() {
         override val fileStatus: FileStatus get() = change.fileStatus
 
         override fun hash(): String? = change.hashAfter()
     }
 
-    class Unversioned(private val project: Project, private val filePath: FilePath, override val key: Key) : Target() {
+    class Unversioned(
+        private val project: Project,
+        private val filePath: FilePath,
+        override val key: Key,
+    ) : Target() {
         override val fileStatus: FileStatus = FileStatus.UNKNOWN
 
         override fun hash(): String? {
@@ -132,7 +141,7 @@ internal sealed class Target {
 }
 
 /** Shared helpers also used by MarkAllViewedAction. */
-internal fun Change.key(project: com.intellij.openapi.project.Project): Key? {
+internal fun Change.key(project: Project): Key? {
     val file = afterRevision?.file ?: beforeRevision?.file ?: return null
     return KeyDeriver.keyFor(project, file)
 }

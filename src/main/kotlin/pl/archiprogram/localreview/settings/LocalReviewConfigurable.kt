@@ -22,8 +22,8 @@ class LocalReviewConfigurable : Configurable {
 
     override fun getDisplayName(): String = LocalReviewBundle.message("settings.title")
 
-    override fun createComponent(): JComponent {
-        return panel {
+    override fun createComponent(): JComponent =
+        panel {
             group(LocalReviewBundle.message("settings.group.behavior")) {
                 row(LocalReviewBundle.message("settings.ttlDays")) {
                     intTextField(range = 0..3650)
@@ -36,12 +36,14 @@ class LocalReviewConfigurable : Configurable {
                 row {
                     groupingCheckBox =
                         checkBox(LocalReviewBundle.message("settings.enableGrouping"))
-                            .bindSelected(model::enableGrouping).component
+                            .bindSelected(model::enableGrouping)
+                            .component
                 }
                 row {
                     debugLoggingCheckBox =
                         checkBox(LocalReviewBundle.message("settings.enableDebugLogging"))
-                            .bindSelected(model::enableDebugLogging).component
+                            .bindSelected(model::enableDebugLogging)
+                            .component
                 }
                 row {
                     mcpToolsCheckBox =
@@ -52,7 +54,6 @@ class LocalReviewConfigurable : Configurable {
                 }
             }
         }.also { panel = it }
-    }
 
     override fun isModified(): Boolean = model != settings.current()
 

@@ -7,10 +7,10 @@ import pl.archiprogram.localreview.ui.SafeRefresh
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * Listens for branch changes per repository. We do NOT refresh the tree directly here — CLM's
- * dirty-scope refresh hasn't run yet, so the tree would paint the old change set with the new
- * branch's viewed-state keys. Instead we remember the last-known branch and let
- * [pl.archiprogram.localreview.vcs.ChangeSetListener.changeListUpdateDone] trigger the refresh.
+ * Listens for branch changes per repository. CLM's dirty-scope refresh runs after this fires,
+ * so refreshing the tree here would paint the old change set under the new branch's
+ * viewed-state keys; [pl.archiprogram.localreview.vcs.ChangeSetListener.changeListUpdateDone]
+ * triggers the actual refresh once CLM reconciles.
  */
 class GitBranchListener
     @JvmOverloads

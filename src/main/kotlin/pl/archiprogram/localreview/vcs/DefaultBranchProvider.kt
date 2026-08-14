@@ -6,13 +6,12 @@ import com.intellij.openapi.vfs.VirtualFile
 import pl.archiprogram.localreview.state.Key
 
 /**
- * Single branch provider impl. Tries Git4Idea directly; if the Git plugin is absent or its repo
- * manager returns nothing (SVN project, unsynced state, etc.), we fall back to a sentinel.
+ * Tries Git4Idea directly; falls back to a sentinel if the Git plugin is absent or its repo
+ * manager returns nothing (SVN project, unsynced state, etc.).
  *
- * Splitting this into interface + service-override caused the branch to always resolve to
- * `NO_BRANCH` in the sandbox (the optional fragment's service override didn't take effect in
- * 2024.1), so keys stored by actions and keys derived by the renderer/modifier ended up in
- * different scopes. Keeping it simple and direct avoids that class of bug entirely.
+ * An interface + service-override split silently fails in the 2024.1 sandbox: the optional
+ * fragment's service override doesn't take effect, resolving every branch to `NO_BRANCH` and
+ * desyncing keys stored by actions from keys derived by the renderer/modifier.
  */
 class DefaultBranchProvider : BranchProvider {
     override fun currentBranch(
