@@ -97,12 +97,13 @@ class ReviewStateServicePersistenceTest : BasePlatformTestCase() {
         assertEquals("h", state.entries[0].hashHex)
     }
 
-    fun testReconcileDropsEntriesNotBackedByCurrentChanges() {
+    fun testReconcileDropsEntriesNotBackedByCurrentChangesOnceGraceElapses() {
         val keep = Key("/r", "m", "/r/keep")
         val drop = Key("/r", "m", "/r/drop")
         service.mark(keep, "h1", 1L)
         service.mark(drop, "h2", 2L)
 
+        // First miss: only starts the grace clock, doesn't evict yet.
         service.reconcile(
             currentChanges = setOf(keep),
             renames = emptyMap(),
@@ -110,9 +111,80 @@ class ReviewStateServicePersistenceTest : BasePlatformTestCase() {
             settings = LocalReviewSettings.State(),
             now = 1_000_000L,
         )
+        assertTrue("a single missing snapshot must not evict immediately", service.isViewed(drop))
+
+        // Still missing after the grace window: now it's evicted.
+        service.reconcile(
+            currentChanges = setOf(keep),
+            renames = emptyMap(),
+            rehashedContent = emptyMap(),
+            settings = LocalReviewSettings.State(),
+            now = 1_000_000L + 5_000L,
+        )
 
         assertTrue(service.isViewed(keep))
         assertFalse(service.isViewed(drop))
+    }
+
+    fun testReconcileMissingEntrySurvivesTransientGapShorterThanGrace() {
+        // Regression: an external `git add`/`git reset` can make ChangeListManager report a file
+        // as absent from both `allChanges` and `unversionedFilesPaths` for one or more transient
+        // refresh passes before it settles. A single miss must not permanently drop the mark.
+        val key = Key("/r", "m", "/r/staged.txt")
+        service.mark(key, "h", now = 0L)
+
+        service.reconcile(
+            currentChanges = emptySet(),
+            renames = emptyMap(),
+            rehashedContent = emptyMap(),
+            settings = LocalReviewSettings.State(),
+            now = 1_000L,
+        )
+        assertTrue("transient absence must not evict", service.isViewed(key))
+
+        // CLM settles: the file reappears (now correctly categorized) before the grace window
+        // elapses, so the pending eviction must be cancelled.
+        service.reconcile(
+            currentChanges = setOf(key),
+            renames = emptyMap(),
+            rehashedContent = emptyMap(),
+            settings = LocalReviewSettings.State(),
+            now = 2_000L,
+        )
+        assertTrue(service.isViewed(key))
+
+        // A later miss must start a fresh grace window rather than reusing the stale timestamp.
+        service.reconcile(
+            currentChanges = emptySet(),
+            renames = emptyMap(),
+            rehashedContent = emptyMap(),
+            settings = LocalReviewSettings.State(),
+            now = 2_000L + 5_000L,
+        )
+        assertTrue("pending eviction must reset after reappearing", service.isViewed(key))
+    }
+
+    fun testReconcileEvictsGenuinelyGoneEntryAfterSustainedAbsence() {
+        val key = Key("/r", "m", "/r/committed.kt")
+        service.mark(key, "h", now = 0L)
+
+        service.reconcile(
+            currentChanges = emptySet(),
+            renames = emptyMap(),
+            rehashedContent = emptyMap(),
+            settings = LocalReviewSettings.State(),
+            now = 1_000L,
+        )
+        assertTrue(service.isViewed(key))
+
+        service.reconcile(
+            currentChanges = emptySet(),
+            renames = emptyMap(),
+            rehashedContent = emptyMap(),
+            settings = LocalReviewSettings.State(),
+            now = 1_000L + 5_000L,
+        )
+        assertFalse(service.isViewed(key))
     }
 
     fun testReconcileReKeysRenames() {

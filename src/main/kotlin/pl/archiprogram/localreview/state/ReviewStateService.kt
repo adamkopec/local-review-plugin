@@ -52,6 +52,17 @@ class ReviewStateService(private val project: Project) : PersistentStateComponen
     private val lock = ReentrantReadWriteLock()
     private val entries: MutableMap<Key, ReviewEntry> = HashMap()
 
+    /**
+     * Key → wall-clock time it was first observed missing from a reconcile's `currentChanges`.
+     * `ChangeListManager`'s refresh is not atomic: an external git-index mutation (`git add`,
+     * `git reset`) can produce one or more transient snapshots where a file is in neither
+     * `allChanges` nor `unversionedFilesPaths` before CLM settles — git4idea's index-triggered
+     * repo update runs on its own async queue, decoupled from `VcsDirtyScopeManager`'s refresh.
+     * [reconcile] only evicts an entry once its absence has held for [MISSING_GRACE_MS]; entries
+     * that reappear before then are struck from this map instead of being dropped.
+     */
+    private val pendingRemoval: MutableMap<Key, Long> = HashMap()
+
     // ----- PSC -----
 
     override fun getState(): State {
@@ -69,6 +80,7 @@ class ReviewStateService(private val project: Project) : PersistentStateComponen
         val migrated = migrate(state)
         lock.write {
             entries.clear()
+            pendingRemoval.clear()
             for (dto in migrated.entries) {
                 try {
                     entries[dto.toKey()] = dto.toEntry()
@@ -119,6 +131,7 @@ class ReviewStateService(private val project: Project) : PersistentStateComponen
                     false
                 } else {
                     entries[key] = ReviewEntry(hashHex, now)
+                    pendingRemoval.remove(key)
                     true
                 }
             }
@@ -129,7 +142,11 @@ class ReviewStateService(private val project: Project) : PersistentStateComponen
     }
 
     override fun unmark(key: Key): Boolean {
-        val removed = lock.write { entries.remove(key) != null }
+        val removed =
+            lock.write {
+                pendingRemoval.remove(key)
+                entries.remove(key) != null
+            }
         if (removed) fireChanged()
         return removed
     }
@@ -141,6 +158,7 @@ class ReviewStateService(private val project: Project) : PersistentStateComponen
     ): Boolean {
         val marked =
             lock.write {
+                pendingRemoval.remove(key)
                 if (entries.containsKey(key)) {
                     entries.remove(key)
                     false
@@ -179,12 +197,20 @@ class ReviewStateService(private val project: Project) : PersistentStateComponen
                 }
             }
 
-            // 2. Drop entries not backed by a current Change
-            val iter = entries.entries.iterator()
-            while (iter.hasNext()) {
-                val e = iter.next()
-                if (e.key !in currentChanges) {
-                    iter.remove()
+            // 2. Drop entries not backed by a current Change — but only once the absence has
+            // held for MISSING_GRACE_MS. See the `pendingRemoval` doc comment: a single missing
+            // snapshot can be a transient artifact of an in-flight CLM refresh, not a real drop.
+            for (key in entries.keys.toList()) {
+                if (key in currentChanges) {
+                    pendingRemoval.remove(key)
+                    continue
+                }
+                val firstMissingAt = pendingRemoval[key]
+                if (firstMissingAt == null) {
+                    pendingRemoval[key] = now
+                } else if (now - firstMissingAt >= MISSING_GRACE_MS) {
+                    entries.remove(key)
+                    pendingRemoval.remove(key)
                     changed = true
                 }
             }
@@ -225,6 +251,10 @@ class ReviewStateService(private val project: Project) : PersistentStateComponen
                     }
                 }
             }
+
+            // pendingRemoval must never outlive the entry it tracks (steps 3-5 above can drop
+            // entries without going through the key-by-key removal in step 2).
+            pendingRemoval.keys.retainAll(entries.keys)
         }
         if (changed) fireChanged()
         return changed
@@ -241,6 +271,7 @@ class ReviewStateService(private val project: Project) : PersistentStateComponen
             while (iter.hasNext()) {
                 val e = iter.next()
                 if (e.key.repoRoot == repoRoot && e.key.branch == branch) {
+                    pendingRemoval.remove(e.key)
                     iter.remove()
                     removed++
                 }
@@ -256,6 +287,7 @@ class ReviewStateService(private val project: Project) : PersistentStateComponen
             lock.write {
                 val n = entries.size
                 entries.clear()
+                pendingRemoval.clear()
                 n
             }
         if (removed > 0) fireChanged()
@@ -282,6 +314,16 @@ class ReviewStateService(private val project: Project) : PersistentStateComponen
         val TOPIC: Topic<Listener> = Topic.create("LocalReview.StateChanged", Listener::class.java)
 
         private const val DAY_MS: Long = 24L * 60 * 60 * 1000
+
+        /**
+         * How long a key must be continuously absent from `currentChanges` before [reconcile]
+         * evicts it. Observed real-world `ChangeListManager` convergence after an external
+         * `git add` / `git reset` took multiple refresh passes spanning ~2s; this leaves margin
+         * for slower machines/larger repos while staying invisible to the user (this is
+         * background bookkeeping, never a blocking operation).
+         */
+        private const val MISSING_GRACE_MS: Long = 5_000L
+
         private val LOG = Logger.getInstance(ReviewStateService::class.java)
 
         fun getInstance(project: Project): ReviewStateService = project.service()

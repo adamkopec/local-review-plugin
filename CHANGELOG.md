@@ -6,6 +6,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- `ReviewStateService.reconcile()`: a reviewed file could be silently unreviewed by staging or
+  unstaging it (`git add` / `git reset`), in either direction. Root cause: `ChangeListManager`'s
+  refresh isn't atomic — an external mutation to `.git/index` can produce one or more transient
+  snapshots where the file is in neither `allChanges` nor `unversionedFilesPaths` before CLM
+  settles (git4idea's index-triggered repo update runs on its own async queue, decoupled from
+  `VcsDirtyScopeManager`'s refresh cycle), and the previous logic evicted a mark on the very first
+  snapshot where its key was missing. Reconcile now requires an absence to hold for 5s across
+  repeated reconciles before evicting, so a transient gap no longer destroys real marks while
+  genuinely-gone entries (committed, reverted, deleted) still get cleaned up.
+
 ## [0.4.2] - 2026-04-24
 
 ### Changed
